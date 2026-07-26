@@ -1,16 +1,21 @@
-import React, { useEffect } from 'react';
-import { Platform, Alert, Linking } from 'react-native';
-import { GoogleSignin, GoogleSigninButton, statusCodes } from '@react-native-google-signin/google-signin';
+import React from 'react';
+import { Alert, Platform } from 'react-native';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { useAuthStore } from '../stores/authStore';
 
 const GOOGLE_WEB_CLIENT_ID = '726476736350-o9j27vqrl98bde2brjt9va0n7149600k.apps.googleusercontent.com';
 
 export const configureGoogleSignIn = () => {
-  GoogleSignin.configure({
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-    offlineAccess: true,
-    forceCodeForRefreshToken: true,
-  });
+  try {
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: true,
+      forceCodeForRefreshToken: true,
+      scopes: ['profile', 'email'],
+    });
+  } catch (e) {
+    console.warn('[GoogleSignIn] Configure failed:', e);
+  }
 };
 
 export const googleLogin = async () => {
@@ -20,8 +25,7 @@ export const googleLogin = async () => {
     const idToken = userInfo.data?.idToken;
 
     if (!idToken) {
-      Alert.alert('Error', 'No ID token received from Google.');
-      return;
+      throw new Error('No ID token received from Google.');
     }
 
     const { googleLogin: storeGoogleLogin } = useAuthStore.getState();
@@ -29,35 +33,36 @@ export const googleLogin = async () => {
     return userInfo.data;
   } catch (error: any) {
     if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-      console.log('[GoogleSignIn] User cancelled');
-    } else if (error.code === statusCodes.IN_PROGRESS) {
-      console.log('[GoogleSignIn] Sign in in progress');
-    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      Alert.alert('Error', 'Google Play Services not available.');
-    } else {
-      console.error('[GoogleSignIn] Error:', error);
-      Alert.alert('Error', error.message || 'Google sign-in failed.');
+      return null;
     }
+    if (error.code === statusCodes.IN_PROGRESS) {
+      return null;
+    }
+    if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      Alert.alert('Play Services Required', 'Please update Google Play Services to use Google Sign-In.');
+      return null;
+    }
+    if (String(error.message || '').includes('DEVELOPER_ERROR') || String(error.code || '') === '10') {
+      Alert.alert(
+        'Google Sign-In Unavailable',
+        'Google Sign-In is not configured for this app yet. Please use email and password to sign in.'
+      );
+      return null;
+    }
+    console.error('[GoogleSignIn] Error:', error);
+    Alert.alert('Sign-In Error', 'Google sign-in failed. Please try email and password instead.');
+    return null;
   }
 };
 
 export const googleLogout = async () => {
   try {
-    await GoogleSignin.revokeAccess();
-    await GoogleSignin.signOut();
+    const isSignedIn = GoogleSignin.isSignedIn();
+    if (isSignedIn) {
+      await GoogleSignin.revokeAccess();
+      await GoogleSignin.signOut();
+    }
   } catch (error) {
-    console.error('[GoogleSignIn] Logout error:', error);
+    console.warn('[GoogleSignIn] Logout error:', error);
   }
-};
-
-export const GoogleSignInButton = ({ style, size, color, disabled, onPress }: any) => {
-  return (
-    <GoogleSigninButton
-      style={style}
-      size={size || GoogleSigninButton.Size.Wide}
-      color={color || GoogleSigninButton.Color.Light}
-      disabled={disabled}
-      onPress={onPress}
-    />
-  );
 };

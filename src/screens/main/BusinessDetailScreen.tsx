@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop';
+
 export default function BusinessDetailScreen({ route, navigation }: any) {
   const { id, slug } = route.params;
   const { isAuthenticated } = useAuthStore();
@@ -19,7 +21,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['businessDetail', slug || id],
-    queryFn: () => api.listings.getBySlug(slug || id),
+    queryFn: () => slug ? api.listings.getBySlug(slug) : api.listings.getById(id),
     enabled: !!(slug || id),
   });
 
@@ -105,13 +107,13 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to submit review.'),
   });
 
-  const business = data?.data || {};
-  const reviews = reviewsData?.data || [];
-  const qa = qaData?.data || [];
-  const offers = offersData?.data || [];
-  const similar = similarData?.data || [];
+  const business = data?.data || data || {};
+  const reviews = reviewsData?.data || reviewsData || [];
+  const qa = qaData?.data || qaData || [];
+  const offers = offersData?.data || offersData || [];
+  const similar = similarData?.data || similarData || [];
   const isFollowing = followData?.data?.isFollowing || false;
-  const followerCount = followerCountData?.data?.count || 0;
+  const followerCount = followerCountData?.data?.count || business.followersCount || 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -120,15 +122,16 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   };
 
   const handleShare = async () => {
+    const name = business.title || business.name || 'this business';
     try {
       await Share.share({
-        message: `Check out ${business.name} on NAAMPATA!\nhttps://naampata.com/business/${business.slug || business.id}`,
+        message: `Check out ${name} on NAAMPATA!\nhttps://naampata.com/business/${business.slug || business.id}`,
       });
     } catch (e) {}
   };
 
   const handleWhatsApp = () => {
-    const phone = business.whatsapp || business.contactPhone;
+    const phone = business.whatsapp || business.phone;
     if (phone) Linking.openURL(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`);
   };
 
@@ -149,6 +152,29 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
     );
   }
 
+  const coverImage = business.coverImageUrl || business.coverImage || FALLBACK_IMG;
+  const businessName = business.title || business.name || 'Business Name';
+  const categoryName = business.category?.name || business.suggestedCategoryName || '';
+  const rating = business.averageRating || business.rating || '0.0';
+  const reviewCount = business.totalReviews || reviews.length || 0;
+  const description = business.description || business.shortDescription || 'No description provided.';
+  const logoUrl = business.logoUrl || business.logo || null;
+  const contactPhone = business.phone || business.contactPhone || business.vendor?.businessPhone || '';
+  const lat = parseFloat(business.latitude) || null;
+  const lng = parseFloat(business.longitude) || null;
+
+  const hoursArray = Array.isArray(business.businessHours) ? business.businessHours : [];
+  const hoursObj: any = {};
+  hoursArray.forEach((h: any) => {
+    if (h.dayOfWeek) hoursObj[h.dayOfWeek] = h;
+  });
+  const hasHours = Object.keys(hoursObj).length > 0;
+
+  const socialLinks = Array.isArray(business.socialLinks) ? business.socialLinks.reduce((acc: any, link: any) => {
+    if (link && link.platform && link.url) acc[link.platform] = link.url;
+    return acc;
+  }, {}) : (typeof business.socialLinks === 'object' && business.socialLinks ? business.socialLinks : {});
+
   return (
     <View className="flex-1 bg-[#F8FAFC]">
       <ScrollView
@@ -157,7 +183,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
       >
         <View className="h-64 bg-slate-200">
           <Image
-            source={{ uri: business.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop' }}
+            source={{ uri: coverImage }}
             className="w-full h-full"
             resizeMode="cover"
           />
@@ -178,22 +204,26 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         <View className="px-4 py-6 -mt-6 bg-[#F8FAFC] rounded-t-3xl">
           <View className="flex-row justify-between items-start mb-2">
             <View className="flex-1 pr-4">
-              <Text className="text-3xl font-bold text-[#112D4E]">{business.name || 'Business Name'}</Text>
-              <Text className="text-[#FF7A30] font-medium mt-1">{business.category?.name || 'Category'}</Text>
+              <Text className="text-3xl font-bold text-[#112D4E]">{businessName}</Text>
+              {categoryName ? (
+                <Text className="text-[#FF7A30] font-medium mt-1">{categoryName}</Text>
+              ) : null}
               {followerCount > 0 && (
                 <Text className="text-slate-400 text-xs mt-1">{followerCount} followers</Text>
               )}
             </View>
-            <View className="w-16 h-16 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-              <Image source={{ uri: business.logo }} className="w-full h-full" resizeMode="contain" />
-            </View>
+            {logoUrl ? (
+              <View className="w-16 h-16 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                <Image source={{ uri: logoUrl }} className="w-full h-full" resizeMode="cover" />
+              </View>
+            ) : null}
           </View>
 
           <View className="flex-row items-center justify-between mb-4">
             <View className="flex-row items-center">
               <Icon name="star" size={20} color="#F59E0B" />
-              <Text className="font-bold text-slate-900 ml-1 text-base">{business.rating || '0.0'}</Text>
-              <Text className="text-slate-400 ml-1">({reviews.length} reviews)</Text>
+              <Text className="font-bold text-slate-900 ml-1 text-base">{Number(rating).toFixed(1)}</Text>
+              <Text className="text-slate-400 ml-1">({reviewCount} reviews)</Text>
               <View className="w-1 h-1 bg-slate-300 rounded-full mx-3" />
               <Text className="text-green-500 font-bold">Open Now</Text>
             </View>
@@ -201,9 +231,9 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
 
           <View className="flex-row justify-between mb-6 border-y border-slate-200 py-4">
             {[
-              { icon: 'phone', color: '#112D4E', bgColor: '#112D4E/10', label: 'Call', action: () => Linking.openURL(`tel:${business.contactPhone || business.phone}`) },
-              { icon: 'chat', color: '#25D366', bgColor: '#25D366/10', label: 'WhatsApp', action: handleWhatsApp },
-              { icon: 'directions', color: '#FF7A30', bgColor: '#FF7A30/10', label: 'Directions', action: handleDirections },
+              { icon: 'phone', color: '#112D4E', bgColor: '#112D4E10', label: 'Call', action: () => contactPhone && Linking.openURL(`tel:${contactPhone}`) },
+              { icon: 'chat', color: '#25D366', bgColor: '#25D36610', label: 'WhatsApp', action: handleWhatsApp },
+              { icon: 'directions', color: '#FF7A30', bgColor: '#FF7A3010', label: 'Directions', action: handleDirections },
               { icon: 'share', color: '#64748B', bgColor: '#F1F5F9', label: 'Share', action: handleShare },
             ].map((item, idx) => (
               <TouchableOpacity key={idx} className="items-center flex-1" onPress={item.action}>
@@ -216,56 +246,45 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
           </View>
 
           <View className="flex-row mb-6">
-            <TouchableOpacity
-              className={`flex-1 py-3 rounded-xl items-center mr-2 border ${activeTab === 'about' ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
-              onPress={() => setActiveTab('about')}
-            >
-              <Text className={`font-bold text-sm ${activeTab === 'about' ? 'text-white' : 'text-slate-600'}`}>About</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-3 rounded-xl items-center mr-2 border ${activeTab === 'reviews' ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
-              onPress={() => setActiveTab('reviews')}
-            >
-              <Text className={`font-bold text-sm ${activeTab === 'reviews' ? 'text-white' : 'text-slate-600'}`}>Reviews</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-3 rounded-xl items-center mr-2 border ${activeTab === 'qa' ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
-              onPress={() => setActiveTab('qa')}
-            >
-              <Text className={`font-bold text-sm ${activeTab === 'qa' ? 'text-white' : 'text-slate-600'}`}>Q&A</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-3 rounded-xl items-center border ${activeTab === 'offers' ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
-              onPress={() => setActiveTab('offers')}
-            >
-              <Text className={`font-bold text-sm ${activeTab === 'offers' ? 'text-white' : 'text-slate-600'}`}>Offers</Text>
-            </TouchableOpacity>
+            {(['about', 'reviews', 'qa', 'offers'] as const).map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                className={`flex-1 py-3 rounded-xl items-center mr-2 border ${activeTab === tab ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
+                onPress={() => setActiveTab(tab)}
+              >
+                <Text className={`font-bold text-sm ${activeTab === tab ? 'text-white' : 'text-slate-600'}`}>
+                  {tab === 'about' ? 'About' : tab === 'reviews' ? 'Reviews' : tab === 'qa' ? 'Q&A' : 'Offers'}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {activeTab === 'about' && (
             <>
               <Text className="text-xl font-bold text-[#112D4E] mb-3">About Us</Text>
-              <Text className="text-slate-500 leading-6 mb-6">{business.description || 'No description provided.'}</Text>
+              <Text className="text-slate-500 leading-6 mb-6">{description}</Text>
 
-              {business.businessHours && Object.keys(business.businessHours).length > 0 && (
+              {hasHours && (
                 <>
                   <Text className="text-xl font-bold text-[#112D4E] mb-3">Business Hours</Text>
                   <View className="bg-white rounded-2xl p-4 border border-slate-100 mb-6">
-                    {Object.entries(business.businessHours).map(([day, hours]: [string, any]) => (
+                    {Object.entries(hoursObj).map(([day, hours]: [string, any]) => (
                       <View key={day} className="flex-row justify-between py-2 border-b border-slate-50 last:border-0">
                         <Text className="font-medium text-slate-700 capitalize">{day}</Text>
-                        <Text className="text-slate-500">{hours?.isOpen ? `${hours.open} - ${hours.close}` : 'Closed'}</Text>
+                        <Text className="text-slate-500">
+                          {hours.isOpen ? `${hours.openTime || hours.open || ''} - ${hours.closeTime || hours.close || ''}` : 'Closed'}
+                        </Text>
                       </View>
                     ))}
                   </View>
                 </>
               )}
 
-              {business.amenities && business.amenities.length > 0 && (
+              {business.facilities && business.facilities.length > 0 && (
                 <>
                   <Text className="text-xl font-bold text-[#112D4E] mb-3">Amenities</Text>
                   <View className="flex-row flex-wrap mb-6">
-                    {business.amenities.map((amenity: any, idx: number) => (
+                    {business.facilities.map((amenity: any, idx: number) => (
                       <View key={idx} className="bg-slate-100 px-3 py-2 rounded-lg mr-2 mb-2">
                         <Text className="text-slate-600 text-sm font-medium">{typeof amenity === 'string' ? amenity : amenity.name}</Text>
                       </View>
@@ -274,27 +293,49 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                 </>
               )}
 
+              {business.paymentMethods && business.paymentMethods.length > 0 && (
+                <>
+                  <Text className="text-xl font-bold text-[#112D4E] mb-3">Payment Methods</Text>
+                  <View className="flex-row flex-wrap mb-6">
+                    {business.paymentMethods.map((method: string, idx: number) => (
+                      <View key={idx} className="bg-blue-50 px-3 py-2 rounded-lg mr-2 mb-2">
+                        <Text className="text-blue-600 text-sm font-medium">{method}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+
               <Text className="text-xl font-bold text-[#112D4E] mb-3">Location</Text>
-              <View className="flex-row items-start mb-6">
+              <View className="flex-row items-start mb-3">
                 <Icon name="location-on" size={24} color="#94A3B8" />
                 <Text className="text-slate-500 ml-2 flex-1">
-                  {business.address
-                    ? typeof business.address === 'string'
-                      ? business.address
-                      : `${business.address.street || ''}, ${business.address.city || ''}, ${business.address.state || ''}`
-                    : 'No address provided.'}
+                  {business.address || 'No address provided.'}
+                  {business.city ? `, ${business.city}` : ''}
+                  {business.state ? `, ${business.state}` : ''}
+                  {business.country ? `, ${business.country}` : ''}
                 </Text>
               </View>
 
-              {business.socialLinks && Object.keys(business.socialLinks).length > 0 && (
+              {lat && lng && (
+                <TouchableOpacity
+                  className="bg-[#FF7A30] py-3 rounded-xl items-center mb-6 flex-row justify-center"
+                  onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}
+                >
+                  <Icon name="map" size={20} color="#FFF" />
+                  <Text className="text-white font-bold ml-2">Open in Google Maps</Text>
+                </TouchableOpacity>
+              )}
+
+              {Object.keys(socialLinks).length > 0 && (
                 <>
                   <Text className="text-xl font-bold text-[#112D4E] mb-3">Social Media</Text>
                   <View className="flex-row mb-6">
-                    {Object.entries(business.socialLinks).map(([platform, url]: [string, any]) => (
+                    {Object.entries(socialLinks).map(([platform, url]: [string, any]) => (
                       <TouchableOpacity
                         key={platform}
                         className="bg-slate-100 w-12 h-12 rounded-full items-center justify-center mr-3"
-                        onPress={() => Linking.openURL(url)}
+                        onPress={() => url && Linking.openURL(url)}
                       >
                         <Icon name={platform === 'facebook' ? 'facebook' : platform === 'instagram' ? 'camera-alt' : platform === 'twitter' ? 'tag' : 'link'} size={20} color="#64748B" />
                       </TouchableOpacity>
@@ -340,10 +381,14 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                 <View key={review.id} className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
                   <View className="flex-row items-center mb-2">
                     <View className="w-10 h-10 bg-slate-200 rounded-full items-center justify-center mr-3">
-                      <Icon name="person" size={20} color="#94A3B8" />
+                      {review.user?.avatar ? (
+                        <Image source={{ uri: review.user.avatar }} className="w-10 h-10 rounded-full" />
+                      ) : (
+                        <Icon name="person" size={20} color="#94A3B8" />
+                      )}
                     </View>
                     <View className="flex-1">
-                      <Text className="font-bold text-slate-800">{review.user?.fullName || 'User'}</Text>
+                      <Text className="font-bold text-slate-800">{review.user?.fullName || review.user?.firstName || 'User'}</Text>
                       <View className="flex-row">
                         {[1, 2, 3, 4, 5].map((s) => (
                           <Icon key={s} name={s <= (review.rating || 0) ? 'star' : 'star-border'} size={14} color="#F59E0B" />
@@ -447,7 +492,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             <>
               {offers.length > 0 ? offers.map((offer: any) => (
                 <View key={offer.id} className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
-                  {offer.imageUrl && <Image source={{ uri: offer.imageUrl }} className="w-full h-32 rounded-xl mb-3 bg-slate-200" />}
+                  {(offer.imageUrl || offer.bannerUrl) && <Image source={{ uri: offer.imageUrl || offer.bannerUrl }} className="w-full h-32 rounded-xl mb-3 bg-slate-200" />}
                   <Text className="font-bold text-[#112D4E] text-lg">{offer.title}</Text>
                   <Text className="text-slate-500 text-sm mt-1" numberOfLines={2}>{offer.description}</Text>
                   {offer.endDate && (
@@ -471,12 +516,12 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                   className="bg-white rounded-2xl p-3 mr-3 border border-slate-100 shadow-sm w-48"
                   onPress={() => navigation.push('BusinessDetail', { id: biz.id, slug: biz.slug })}
                 >
-                  <Image source={{ uri: biz.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }} className="w-full h-24 rounded-xl bg-slate-200 mb-2" />
-                  <Text className="font-bold text-slate-800" numberOfLines={1}>{biz.name}</Text>
+                  <Image source={{ uri: biz.coverImageUrl || biz.coverImage || FALLBACK_IMG }} className="w-full h-24 rounded-xl bg-slate-200 mb-2" />
+                  <Text className="font-bold text-slate-800" numberOfLines={1}>{biz.title || biz.name}</Text>
                   <Text className="text-slate-400 text-xs">{biz.category?.name || ''}</Text>
                   <View className="flex-row items-center mt-1">
                     <Icon name="star" size={12} color="#F59E0B" />
-                    <Text className="text-slate-600 text-xs ml-1">{Number(biz.rating || 0).toFixed(1)}</Text>
+                    <Text className="text-slate-600 text-xs ml-1">{Number(biz.averageRating || biz.rating || 0).toFixed(1)}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -508,7 +553,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         </TouchableOpacity>
         <TouchableOpacity
           className="flex-1 bg-[#FF7A30] h-12 rounded-xl items-center justify-center"
-          onPress={() => Linking.openURL(`tel:${business.contactPhone || business.phone}`)}
+          onPress={() => contactPhone && Linking.openURL(`tel:${contactPhone}`)}
         >
           <Text className="text-white font-bold text-lg">Contact Now</Text>
         </TouchableOpacity>

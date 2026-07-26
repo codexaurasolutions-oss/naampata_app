@@ -57,7 +57,8 @@ export default function RegisterScreen({ navigation }: any) {
     setGoogleLoading(true);
     try {
       await googleLogin();
-      navigation.goBack();
+    } catch (error: any) {
+      console.warn('Google register failed:', error);
     } finally {
       setGoogleLoading(false);
     }
@@ -233,10 +234,7 @@ export default function RegisterScreen({ navigation }: any) {
               <ActivityIndicator color="#FF7A30" />
             ) : (
               <>
-                <Image
-                  source={{ uri: 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg' }}
-                  className="w-6 h-6 mr-3"
-                />
+            <Icon name="google" size={22} color="#DB4437" />
                 <Text className="text-slate-700 font-bold text-base">Continue with Google</Text>
               </>
             )}
