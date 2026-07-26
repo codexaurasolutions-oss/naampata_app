@@ -16,6 +16,8 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
 
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories', 'popular'],
@@ -33,11 +35,16 @@ export default function HomeScreen({ navigation }: any) {
     queryKey: ['offers', 'home'],
     queryFn: () => api.offers.searchPublic({ limit: 4 }),
   });
+  const { data: countriesData } = useQuery({ queryKey: ['countries'], queryFn: () => api.cities.getCountries() });
+  const { data: homeCitiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
 
   const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
   const featuredBusinesses = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
   const topCities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
   const latestOffers = Array.isArray(offersData) ? offersData : (offersData?.data || offersData?.offers || []);
+  const countries = Array.isArray(countriesData) ? countriesData : (countriesData?.data || []);
+  const homeCities = Array.isArray(homeCitiesData) ? homeCitiesData : (homeCitiesData?.data || homeCitiesData?.cities || []);
+  const filteredCities = selectedCountry ? homeCities.filter((c: any) => c.country === selectedCountry) : homeCities;
 
   return (
     <View style={s.container}>
@@ -63,13 +70,34 @@ export default function HomeScreen({ navigation }: any) {
                   placeholderTextColor="#CBD5E1"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  onSubmitEditing={() => navigation.navigate('Search', { initialQuery: searchQuery })}
+                  onSubmitEditing={() => navigation.navigate('Search', { initialQuery: searchQuery, country: selectedCountry, city: selectedCity })}
                   returnKeyType="search"
                 />
               </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 12, paddingTop: 8 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectedCountry ? '#FF7A30' : '#F8FAFC', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: selectedCountry ? '#FF7A30' : '#E2E8F0', gap: 4 }}
+                    onPress={() => { setSelectedCountry(''); setSelectedCity(''); }}
+                  >
+                    <Icon name="public" size={14} color={selectedCountry ? '#FFF' : '#94A3B8'} />
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: selectedCountry ? '#FFF' : '#64748B' }}>{selectedCountry || 'Country'}</Text>
+                    <Icon name="arrow-drop-down" size={14} color={selectedCountry ? '#FFF' : '#94A3B8'} />
+                  </TouchableOpacity>
+                  {selectedCountry && (
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectedCity ? '#FF7A30' : '#F8FAFC', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: selectedCity ? '#FF7A30' : '#E2E8F0', gap: 4 }}
+                      onPress={() => setSelectedCity('')}
+                    >
+                      <Icon name="location-city" size={14} color={selectedCity ? '#FFF' : '#94A3B8'} />
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: selectedCity ? '#FFF' : '#64748B' }}>{selectedCity || 'City'}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </ScrollView>
               <TouchableOpacity
                 style={s.searchButton}
-                onPress={() => navigation.navigate('Search', { initialQuery: searchQuery })}
+                onPress={() => navigation.navigate('Search', { initialQuery: searchQuery, country: selectedCountry, city: selectedCity })}
               >
                 <Icon name="search" size={20} color="#FFF" />
                 <Text style={s.searchButtonText}>Search</Text>

@@ -18,6 +18,12 @@ export default function SearchScreen({ route, navigation }: any) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (debouncedQuery.length > 2) {
+      api.demand.logSearch({ query: debouncedQuery }).catch(() => {});
+    }
+  }, [debouncedQuery]);
+
   const { data: suggestionsData, isLoading: loadingSuggestions } = useQuery({
     queryKey: ['suggestions', debouncedQuery],
     queryFn: () => api.listings.getSuggestions(debouncedQuery),

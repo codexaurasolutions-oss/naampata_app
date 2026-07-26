@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const WIZARD_STORAGE_KEY = 'naampata_wizard_draft';
 
 interface WizardState {
   currentStep: number;
@@ -29,12 +32,17 @@ interface WizardState {
     faqs: { question: string; answer: string }[];
     expansion: { franchiseAvailable: boolean; dealerInquiries: boolean; importerExporter: boolean };
     media: { logoUrl: string; coverUrl: string; gallery: string[] };
+    landmark: string;
+    businessEmail: string;
   };
   setStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   updateFormData: (data: Partial<WizardState['formData']>) => void;
   resetWizard: () => void;
+  loadDraft: () => Promise<void>;
+  saveDraft: () => Promise<void>;
+  hasDraft: boolean;
 }
 
 const initialFormData: WizardState['formData'] = {
@@ -66,19 +74,47 @@ const initialFormData: WizardState['formData'] = {
   faqs: [],
   expansion: { franchiseAvailable: false, dealerInquiries: false, importerExporter: false },
   media: { logoUrl: '', coverUrl: '', gallery: [] },
+  landmark: '',
+  businessEmail: '',
 };
 
-export const useWizardStore = create<WizardState>((set) => ({
+export const useWizardStore = create<WizardState>((set, get) => ({
   currentStep: 1,
   formData: initialFormData,
+  hasDraft: false,
   setStep: (step) => set({ currentStep: step }),
-  nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 20) })),
-  prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
-  updateFormData: (data) => set((state) => ({ 
-    formData: { ...state.formData, ...data } 
-  })),
-  resetWizard: () => set({ 
-    currentStep: 1, 
-    formData: initialFormData 
+  nextStep: () => set((state) => {
+    const next = Math.min(state.currentStep + 1, 20);
+    setTimeout(() => get().saveDraft(), 0);
+    return { currentStep: next };
   }),
+  prevStep: () => set((state) => {
+    const prev = Math.max(state.currentStep - 1, 1);
+    setTimeout(() => get().saveDraft(), 0);
+    return { currentStep: prev };
+  }),
+  updateFormData: (data) => set((state) => {
+    const updated = { formData: { ...state.formData, ...data } };
+    setTimeout(() => get().saveDraft(), 0);
+    return updated;
+  }),
+  resetWizard: () => {
+    set({ currentStep: 1, formData: initialFormData, hasDraft: false });
+    AsyncStorage.removeItem(WIZARD_STORAGE_KEY).catch(() => {});
+  },
+  loadDraft: async () => {
+    try {
+      const raw = await AsyncStorage.getItem(WIZARD_STORAGE_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        set({ currentStep: draft.currentStep || 1, formData: { ...initialFormData, ...draft.formData }, hasDraft: true });
+      }
+    } catch (e) {}
+  },
+  saveDraft: async () => {
+    try {
+      const { currentStep, formData } = get();
+      await AsyncStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify({ currentStep, formData }));
+    } catch (e) {}
+  },
 }));

@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { TouchableOpacity, View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import HomeScreen from '../screens/main/HomeScreen';
@@ -7,10 +8,14 @@ import SearchScreen from '../screens/main/SearchScreen';
 import OffersScreen from '../screens/main/OffersScreen';
 import SavedScreen from '../screens/main/SavedScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import MessagesScreen from '../screens/dashboard/MessagesScreen';
+import { useAuthStore } from '../stores/authStore';
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -24,6 +29,7 @@ export default function MainTabNavigator() {
           let iconName = 'home';
           if (route.name === 'Home') iconName = 'home';
           else if (route.name === 'Search') iconName = 'search';
+          else if (route.name === 'Messages') iconName = 'chat-bubble-outline';
           else if (route.name === 'Offers') iconName = 'local-offer';
           else if (route.name === 'Saved') iconName = 'favorite-border';
           else if (route.name === 'Profile') iconName = 'person-outline';
@@ -34,6 +40,7 @@ export default function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Search" component={SearchScreen} />
+      {isAuthenticated && <Tab.Screen name="Messages" component={MessagesScreen} />}
       <Tab.Screen name="Offers" component={OffersScreen} />
       <Tab.Screen name="Saved" component={SavedScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

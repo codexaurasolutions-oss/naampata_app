@@ -36,6 +36,11 @@ export default function SearchResultsScreen({ route, navigation }: any) {
   const [topRated, setTopRated] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [onlineNow, setOnlineNow] = useState(false);
+  const [fastResponse, setFastResponse] = useState(false);
+  const [experience, setExperience] = useState(false);
+  const [mostContacted, setMostContacted] = useState(false);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [sortBy, setSortBy] = useState<SortOption>(route?.params?.sortBy || 'recommended');
   const { isAuthenticated } = useAuthStore();
 
@@ -74,8 +79,12 @@ export default function SearchResultsScreen({ route, navigation }: any) {
       if (hasLocation) params.radius = selectedRadius;
       if (openNow) params.openNow = true;
       if (topRated) params.minRating = 4.5;
+      if (minRating > 0 && !topRated) params.minRating = minRating;
       if (verifiedOnly) params.verifiedOnly = true;
       if (onlineNow) params.onlineNow = true;
+      if (fastResponse) params.fastResponse = true;
+      if (experience) params.experience = true;
+      if (mostContacted) params.mostContacted = true;
       if (sortBy === 'top_rated') params.sortBy = 'rating';
       else if (sortBy === 'most_reviewed') params.sortBy = 'reviews';
       else if (sortBy === 'nearest') params.sortBy = 'distance';
@@ -89,7 +98,8 @@ export default function SearchResultsScreen({ route, navigation }: any) {
 
   const activeFiltersCount = [
     selectedCategory, selectedCountry, selectedCity,
-    openNow, topRated, verifiedOnly, onlineNow,
+    openNow, topRated, verifiedOnly, onlineNow, fastResponse, experience, mostContacted,
+    minRating > 0 ? 'rating' : '',
   ].filter(Boolean).length + (sortBy !== 'recommended' ? 1 : 0) + (hasLocation ? 1 : 0);
 
   return (
@@ -128,6 +138,12 @@ export default function SearchResultsScreen({ route, navigation }: any) {
                 <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
               </View>
             )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.gridListBtn, { marginLeft: 8 }]}
+            onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+          >
+            <Icon name={viewMode === 'list' ? 'view-list' : 'view-module'} size={22} color="#64748B" />
           </TouchableOpacity>
         </View>
 
@@ -207,6 +223,30 @@ export default function SearchResultsScreen({ route, navigation }: any) {
                 <TouchableOpacity onPress={() => setVerifiedOnly(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
               </View>
             )}
+            {fastResponse && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Fast Response</Text>
+                <TouchableOpacity onPress={() => setFastResponse(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {experience && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Experienced</Text>
+                <TouchableOpacity onPress={() => setExperience(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {mostContacted && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Most Contacted</Text>
+                <TouchableOpacity onPress={() => setMostContacted(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {minRating > 0 && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Rating {minRating}+</Text>
+                <TouchableOpacity onPress={() => setMinRating(0)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
             {hasLocation && (
               <View style={styles.activeChip}>
                 <Text style={styles.activeChipText}>{selectedRadius}km</Text>
@@ -226,14 +266,38 @@ export default function SearchResultsScreen({ route, navigation }: any) {
         {isLoading ? (
           <ActivityIndicator color="#FF7A30" style={{ marginVertical: 40 }} />
         ) : results.length > 0 ? (
-          results.map((biz: any, index: number) => (
-            <BusinessCard
-              key={biz.id || index}
-              business={biz}
-              onPress={() => navigation.navigate('BusinessDetail', { id: biz.id })}
-              onSave={() => handleSave(biz)}
-            />
-          ))
+          viewMode === 'grid' ? (
+            <View style={styles.gridContainer}>
+              {results.map((biz: any, index: number) => {
+                const img = biz.coverImageUrl || biz.coverImage || biz.logoUrl || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop';
+                return (
+                  <TouchableOpacity key={biz.id || index} style={styles.gridCard} onPress={() => navigation.navigate('BusinessDetail', { id: biz.id })}>
+                    <View style={{ width: '100%', height: 90, backgroundColor: '#F1F5F9', borderTopLeftRadius: 14, borderTopRightRadius: 14 }}>
+                      <Icon name="business" size={32} color="#CBD5E1" style={{ position: 'absolute', top: 28, alignSelf: 'center' }} />
+                    </View>
+                    <View style={{ padding: 10 }}>
+                      <Text style={{ fontWeight: '700', fontSize: 12, color: '#112D4E' }} numberOfLines={1}>{biz.title || biz.name}</Text>
+                      <Text style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }} numberOfLines={1}>{biz.category?.name || ''}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
+                        <Icon name="star" size={12} color="#F59E0B" />
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#475569' }}>{Number(biz.averageRating || 0).toFixed(1)}</Text>
+                        <Text style={{ fontSize: 10, color: '#94A3B8' }}>· {biz.city || ''}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            results.map((biz: any, index: number) => (
+              <BusinessCard
+                key={biz.id || index}
+                business={biz}
+                onPress={() => navigation.navigate('BusinessDetail', { id: biz.id })}
+                onSave={() => handleSave(biz)}
+              />
+            ))
+          )
         ) : (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconWrap}>
@@ -248,7 +312,9 @@ export default function SearchResultsScreen({ route, navigation }: any) {
               onPress={() => {
                 setSearchQuery(''); setSelectedCategory(''); setSelectedCountry('');
                 setSelectedCity(''); setOpenNow(false); setTopRated(false);
-                setVerifiedOnly(false); setOnlineNow(false); setSortBy('recommended');
+                setVerifiedOnly(false); setOnlineNow(false); setFastResponse(false);
+                setExperience(false); setMostContacted(false); setMinRating(0);
+                setSortBy('recommended');
               }}
             >
               <Text style={styles.clearAllBtnText}>Clear All Filters</Text>
@@ -356,6 +422,20 @@ export default function SearchResultsScreen({ route, navigation }: any) {
               ))}
             </View>
 
+            <Text style={styles.filterSectionTitle}>Minimum Rating</Text>
+            <View style={styles.filterRow}>
+              {[0, 2, 3, 4, 4.5].map((r) => (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.filterChip, minRating === r && styles.filterChipActiveOrange]}
+                  onPress={() => setMinRating(minRating === r ? 0 : r)}
+                >
+                  <Icon name="star" size={14} color={minRating === r ? '#FFF' : '#F59E0B'} />
+                  <Text style={[styles.filterChipText, minRating === r && styles.filterChipTextActive]}>{r === 0 ? 'Any' : `${r}+`}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <Text style={styles.filterSectionTitle}>Quick Filters</Text>
             <View style={styles.filterRow}>
               <TouchableOpacity
@@ -386,6 +466,27 @@ export default function SearchResultsScreen({ route, navigation }: any) {
                 <Icon name="wifi" size={16} color={onlineNow ? '#FFF' : '#64748B'} />
                 <Text style={[styles.filterChipText, onlineNow && styles.filterChipTextActive]}>Online Now</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterChip, fastResponse && styles.filterChipActiveBlue]}
+                onPress={() => setFastResponse(!fastResponse)}
+              >
+                <Icon name="flash-on" size={16} color={fastResponse ? '#FFF' : '#64748B'} />
+                <Text style={[styles.filterChipText, fastResponse && styles.filterChipTextActive]}>Fast Response</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterChip, experience && styles.filterChipActiveDark]}
+                onPress={() => setExperience(!experience)}
+              >
+                <Icon name="work" size={16} color={experience ? '#FFF' : '#64748B'} />
+                <Text style={[styles.filterChipText, experience && styles.filterChipTextActive]}>Experienced</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterChip, mostContacted && styles.filterChipActiveOrange]}
+                onPress={() => setMostContacted(!mostContacted)}
+              >
+                <Icon name="trending-up" size={16} color={mostContacted ? '#FFF' : '#64748B'} />
+                <Text style={[styles.filterChipText, mostContacted && styles.filterChipTextActive]}>Most Contacted</Text>
+              </TouchableOpacity>
             </View>
             <View style={{ height: 30 }} />
           </ScrollView>
@@ -413,6 +514,7 @@ const styles = StyleSheet.create({
   filterBtnActive: { backgroundColor: '#112D4E', borderColor: '#112D4E' },
   filterBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF7A30', width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
   filterBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  gridListBtn: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
   quickFilters: { marginTop: 12, flexDirection: 'row' },
   chip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, marginRight: 8, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', gap: 4 },
   chipActiveOrange: { backgroundColor: '#FF7A30', borderColor: '#FF7A30' },
@@ -437,6 +539,8 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, color: '#64748B', textAlign: 'center', lineHeight: 22 },
   clearAllBtn: { marginTop: 28, backgroundColor: '#112D4E', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
   clearAllBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  gridCard: { width: '48%', backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 12, overflow: 'hidden' },
   modalHeader: { paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', backgroundColor: '#FFFFFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   modalTitle: { fontSize: 22, fontWeight: '900', color: '#112D4E' },
   modalCloseBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F1F5F9' },
