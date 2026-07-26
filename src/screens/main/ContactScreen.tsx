@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Linking, Alert, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function ContactScreen({ navigation }: any) {
   const [name, setName] = useState('');
@@ -8,8 +9,16 @@ export default function ContactScreen({ navigation }: any) {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { isAuthenticated } = useAuthStore();
 
   const handleSubmit = () => {
+    if (!isAuthenticated) {
+      Alert.alert('Login Required', 'Please login to send a message.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+      ]);
+      return;
+    }
     if (!name.trim() || !email.trim() || !message.trim()) {
       Alert.alert('Error', 'Please fill in all required fields.');
       return;

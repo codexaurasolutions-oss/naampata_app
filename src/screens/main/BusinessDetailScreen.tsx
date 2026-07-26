@@ -7,11 +7,30 @@ import { useAuthStore } from '../../stores/authStore';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop';
 
+function getBusinessOpenStatus(businessHours: any[]): { isOpen: boolean; text: string } {
+  if (!Array.isArray(businessHours) || businessHours.length === 0) return { isOpen: false, text: '' };
+  const now = new Date();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const today = dayNames[now.getDay()];
+  const todayHours = businessHours.find((h: any) => h.dayOfWeek?.toLowerCase() === today);
+  if (!todayHours || !todayHours.isOpen) return { isOpen: false, text: 'Closed today' };
+  const openTime = todayHours.openTime || todayHours.open;
+  const closeTime = todayHours.closeTime || todayHours.close;
+  if (!openTime || !closeTime) return { isOpen: false, text: '' };
+  const [openH, openM] = openTime.split(':').map(Number);
+  const [closeH, closeM] = closeTime.split(':').map(Number);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const openMinutes = openH * 60 + openM;
+  const closeMinutes = closeH * 60 + closeM;
+  const isOpen = currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+  return { isOpen, text: isOpen ? 'Open Now' : 'Closed' };
+}
+
 export default function BusinessDetailScreen({ route, navigation }: any) {
   const { id, slug } = route.params;
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'qa' | 'offers'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'qa' | 'offers' | 'faqs'>('about');
   const [qaQuestion, setQaQuestion] = useState('');
   const [qaAnswer, setQaAnswer] = useState('');
   const [answerTo, setAnswerTo] = useState<string | null>(null);
@@ -225,15 +244,47 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               <Text className="font-bold text-slate-900 ml-1 text-base">{Number(rating).toFixed(1)}</Text>
               <Text className="text-slate-400 ml-1">({reviewCount} reviews)</Text>
               <View className="w-1 h-1 bg-slate-300 rounded-full mx-3" />
-              <Text className="text-green-500 font-bold">Open Now</Text>
+              {(() => {
+                const status = getBusinessOpenStatus(business.businessHours);
+                return status.text ? (
+                  <Text style={{ color: status.isOpen ? '#22C55E' : '#EF4444', fontWeight: '700' }}>{status.text}</Text>
+                ) : null;
+              })()}
             </View>
           </View>
 
           <View className="flex-row justify-between mb-6 border-y border-slate-200 py-4">
             {[
-              { icon: 'phone', color: '#112D4E', bgColor: '#112D4E10', label: 'Call', action: () => contactPhone && Linking.openURL(`tel:${contactPhone}`) },
-              { icon: 'chat', color: '#25D366', bgColor: '#25D36610', label: 'WhatsApp', action: handleWhatsApp },
-              { icon: 'directions', color: '#FF7A30', bgColor: '#FF7A3010', label: 'Directions', action: handleDirections },
+              { icon: 'phone', color: '#112D4E', bgColor: '#112D4E10', label: 'Call', action: () => {
+                if (!isAuthenticated) {
+                  Alert.alert('Login Required', 'Please login to contact this business.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+                  ]);
+                  return;
+                }
+                if (contactPhone) Linking.openURL(`tel:${contactPhone}`);
+              }},
+              { icon: 'chat', color: '#25D366', bgColor: '#25D36610', label: 'WhatsApp', action: () => {
+                if (!isAuthenticated) {
+                  Alert.alert('Login Required', 'Please login to contact this business.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+                  ]);
+                  return;
+                }
+                handleWhatsApp();
+              }},
+              { icon: 'directions', color: '#FF7A30', bgColor: '#FF7A3010', label: 'Directions', action: () => {
+                if (!isAuthenticated) {
+                  Alert.alert('Login Required', 'Please login to view directions.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+                  ]);
+                  return;
+                }
+                handleDirections();
+              }},
               { icon: 'share', color: '#64748B', bgColor: '#F1F5F9', label: 'Share', action: handleShare },
             ].map((item, idx) => (
               <TouchableOpacity key={idx} className="items-center flex-1" onPress={item.action}>
@@ -245,15 +296,15 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             ))}
           </View>
 
-          <View className="flex-row mb-6">
-            {(['about', 'reviews', 'qa', 'offers'] as const).map((tab) => (
+          <View style={{ flexDirection: 'row', marginBottom: 24 }}>
+            {(['about', 'reviews', 'qa', 'offers', 'faqs'] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
-                className={`flex-1 py-3 rounded-xl items-center mr-2 border ${activeTab === tab ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginRight: 8, borderWidth: 1, backgroundColor: activeTab === tab ? '#112D4E' : '#FFFFFF', borderColor: activeTab === tab ? '#112D4E' : '#E2E8F0' }}
                 onPress={() => setActiveTab(tab)}
               >
-                <Text className={`font-bold text-sm ${activeTab === tab ? 'text-white' : 'text-slate-600'}`}>
-                  {tab === 'about' ? 'About' : tab === 'reviews' ? 'Reviews' : tab === 'qa' ? 'Q&A' : 'Offers'}
+                <Text style={{ fontWeight: '700', fontSize: 13, color: activeTab === tab ? '#FFFFFF' : '#64748B' }}>
+                  {tab === 'about' ? 'About' : tab === 'reviews' ? 'Reviews' : tab === 'qa' ? 'Q&A' : tab === 'faqs' ? 'FAQs' : 'Offers'}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -320,7 +371,16 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               {lat && lng && (
                 <TouchableOpacity
                   className="bg-[#FF7A30] py-3 rounded-xl items-center mb-6 flex-row justify-center"
-                  onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}
+                  onPress={() => {
+                    if (!isAuthenticated) {
+                      Alert.alert('Login Required', 'Please login to view directions.', [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+                      ]);
+                      return;
+                    }
+                    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+                  }}
                 >
                   <Icon name="map" size={20} color="#FFF" />
                   <Text className="text-white font-bold ml-2">Open in Google Maps</Text>
@@ -348,7 +408,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
 
           {activeTab === 'reviews' && (
             <>
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <View className="bg-white rounded-2xl p-4 border border-slate-100 mb-4">
                   <Text className="font-bold text-[#112D4E] mb-2">Write a Review</Text>
                   <View className="flex-row mb-3">
@@ -376,6 +436,17 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                     <Text className="text-white font-bold">Submit Review</Text>
                   </TouchableOpacity>
                 </View>
+              ) : (
+                <TouchableOpacity
+                  className="bg-white rounded-2xl p-4 border border-slate-100 mb-4 flex-row items-center justify-center"
+                  onPress={() => Alert.alert('Login Required', 'Please login to write a review.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+                  ])}
+                >
+                  <Icon name="edit" size={20} color="#FF7A30" />
+                  <Text className="text-[#FF7A30] font-bold ml-2">Write a Review</Text>
+                </TouchableOpacity>
               )}
               {reviews.map((review: any) => (
                 <View key={review.id} className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
@@ -414,7 +485,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
 
           {activeTab === 'qa' && (
             <>
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <View className="bg-white rounded-2xl p-4 border border-slate-100 mb-4">
                   <Text className="font-bold text-[#112D4E] mb-2">Ask a Question</Text>
                   <TextInput
@@ -434,6 +505,17 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                     <Text className="text-white font-bold">Ask Question</Text>
                   </TouchableOpacity>
                 </View>
+              ) : (
+                <TouchableOpacity
+                  className="bg-white rounded-2xl p-4 border border-slate-100 mb-4 flex-row items-center justify-center"
+                  onPress={() => Alert.alert('Login Required', 'Please login to ask a question.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+                  ])}
+                >
+                  <Icon name="question-answer" size={20} color="#FF7A30" />
+                  <Text className="text-[#FF7A30] font-bold ml-2">Ask a Question</Text>
+                </TouchableOpacity>
               )}
               {qa.map((item: any) => (
                 <View key={item.id} className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
@@ -504,6 +586,22 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               )}
             </>
           )}
+
+          {activeTab === 'faqs' && (
+            <>
+              {business.faqs && business.faqs.length > 0 ? business.faqs.map((faq: any, idx: number) => (
+                <View key={idx} className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
+                  <View className="flex-row items-start">
+                    <Icon name="help-outline" size={20} color="#FF7A30" />
+                    <Text className="font-bold text-[#112D4E] ml-2 flex-1">{faq.question}</Text>
+                  </View>
+                  <Text className="text-slate-500 text-sm mt-2 ml-7">{faq.answer}</Text>
+                </View>
+              )) : (
+                <Text className="text-slate-400 text-center py-8">No FAQs available for this business.</Text>
+              )}
+            </>
+          )}
         </View>
 
         {similar.length > 0 && (
@@ -553,7 +651,16 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         </TouchableOpacity>
         <TouchableOpacity
           className="flex-1 bg-[#FF7A30] h-12 rounded-xl items-center justify-center"
-          onPress={() => contactPhone && Linking.openURL(`tel:${contactPhone}`)}
+          onPress={() => {
+            if (!isAuthenticated) {
+              Alert.alert('Login Required', 'Please login to contact this business.', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+              ]);
+              return;
+            }
+            if (contactPhone) Linking.openURL(`tel:${contactPhone}`);
+          }}
         >
           <Text className="text-white font-bold text-lg">Contact Now</Text>
         </TouchableOpacity>

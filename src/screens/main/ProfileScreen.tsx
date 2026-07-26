@@ -53,27 +53,15 @@ export default function ProfileScreen({ navigation }: any) {
       </FadeInView>
 
       {!isAuthenticated ? (
-        <>
-          <FadeInView delay={100} direction="up">
-            <TouchableOpacity
-              className="bg-[#FF7A30] py-4 rounded-2xl items-center mb-4 shadow-sm flex-row justify-center"
-              onPress={() => navigation.navigate('Auth', { screen: 'Login' })}
-            >
-              <Icon name="login" size={22} color="#FFF" />
-              <Text className="text-white font-semibold text-lg ml-2">Log In / Sign Up</Text>
-            </TouchableOpacity>
-          </FadeInView>
-
-          <FadeInView delay={180} direction="up">
-            <TouchableOpacity
-              className="bg-[#112D4E] py-4 rounded-2xl items-center mb-6 shadow-sm flex-row justify-center"
-              onPress={() => navigation.navigate('Auth', { screen: 'Register' })}
-            >
-              <Icon name="business" size={22} color="#FFF" />
-              <Text className="text-white font-semibold text-lg ml-2">Register Your Business</Text>
-            </TouchableOpacity>
-          </FadeInView>
-        </>
+        <FadeInView delay={100} direction="up">
+          <TouchableOpacity
+            className="bg-[#FF7A30] py-4 rounded-2xl items-center mb-6 shadow-sm flex-row justify-center"
+            onPress={() => navigation.navigate('Auth', { screen: 'Register' })}
+          >
+            <Icon name="person-add" size={22} color="#FFF" />
+            <Text className="text-white font-semibold text-lg ml-2">Log In / Sign Up</Text>
+          </TouchableOpacity>
+        </FadeInView>
       ) : (
         <FadeInView delay={100} direction="up">
           <TouchableOpacity

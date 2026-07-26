@@ -95,7 +95,7 @@ export const api = {
       const query = new URLSearchParams(params).toString();
       return api.get<any>(`/businesses/search?${query}`);
     },
-    getSuggestions: (query: string) => api.get<any>(`/businesses/search/suggestions?query=${encodeURIComponent(query)}`),
+    getSuggestions: (query: string) => api.get<any>(`/businesses/search/suggestions?q=${encodeURIComponent(query)}`),
     getFeatured: (page = 1, limit = 12) => api.get<any>(`/businesses/search?featuredOnly=true&page=${page}&limit=${limit}`),
     getBySlug: (slug: string) => api.get<any>(`/businesses/slug/${slug}`),
     getById: (id: string) => api.get<any>(`/businesses/${id}`),

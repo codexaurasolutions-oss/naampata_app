@@ -25,9 +25,19 @@ export default function HomeScreen({ navigation }: any) {
     queryKey: ['businesses', 'featured'],
     queryFn: () => api.listings.getFeatured(1, 12),
   });
+  const { data: citiesData } = useQuery({
+    queryKey: ['cities', 'popular'],
+    queryFn: () => api.cities.getPopular(),
+  });
+  const { data: offersData } = useQuery({
+    queryKey: ['offers', 'home'],
+    queryFn: () => api.offers.searchPublic({ limit: 4 }),
+  });
 
-  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || (Array.isArray(categoriesData) ? categoriesData : []));
+  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
   const featuredBusinesses = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
+  const topCities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
+  const latestOffers = Array.isArray(offersData) ? offersData : (offersData?.data || offersData?.offers || []);
 
   return (
     <View style={s.container}>
@@ -221,6 +231,62 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
 
+        {topCities.length > 0 && (
+          <View style={s.sectionWhite}>
+            <FadeInView delay={100} direction="up">
+              <View style={s.sectionHeader}>
+                <Text style={s.sectionTitle}>Top Cities</Text>
+                <View style={s.sectionDivider} />
+              </View>
+            </FadeInView>
+            <View style={s.citiesGrid}>
+              {topCities.slice(0, 6).map((city: any, idx: number) => (
+                <FadeInView key={city.id || idx} delay={200 + idx * 60} direction="up">
+                  <TouchableOpacity
+                    style={s.cityCard}
+                    onPress={() => navigation.navigate('Search', { city: city.name, country: city.country })}
+                  >
+                    <View style={[s.cityIconWrap, { backgroundColor: idx % 2 === 0 ? '#FFF7ED' : '#EFF6FF' }]}>
+                      <Icon name="location-city" size={24} color={idx % 2 === 0 ? '#FF7A30' : '#3B82F6'} />
+                    </View>
+                    <Text style={s.cityName} numberOfLines={1}>{city.name}</Text>
+                    <Text style={s.cityCountry} numberOfLines={1}>{city.country}</Text>
+                  </TouchableOpacity>
+                </FadeInView>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {latestOffers.length > 0 && (
+          <View style={s.sectionWhite}>
+            <FadeInView delay={100} direction="up">
+              <View style={s.sectionHeader}>
+                <Text style={s.sectionTitle}>Latest Deals</Text>
+                <View style={s.sectionDivider} />
+              </View>
+            </FadeInView>
+            <View style={s.offersGrid}>
+              {latestOffers.map((offer: any, idx: number) => (
+                <FadeInView key={offer.id || idx} delay={200 + idx * 80} direction="up">
+                  <TouchableOpacity
+                    style={s.offerCard}
+                    onPress={() => navigation.navigate('Offers')}
+                  >
+                    {offer.imageUrl && (
+                      <Image source={{ uri: offer.imageUrl }} style={s.offerImage} />
+                    )}
+                    <View style={s.offerInfo}>
+                      <Text style={s.offerTitle} numberOfLines={1}>{offer.title || offer.name || 'Deal'}</Text>
+                      {offer.discount && <Text style={s.offerDiscount}>{offer.discount}</Text>}
+                    </View>
+                  </TouchableOpacity>
+                </FadeInView>
+              ))}
+            </View>
+          </View>
+        )}
+
         <View style={[s.sectionWhite, { paddingBottom: 40 }]}>
           <FadeInView delay={100} direction="up">
             <View style={s.sectionHeader}>
@@ -302,6 +368,17 @@ const s = StyleSheet.create({
   ratingText: { color: '#1E293B', fontWeight: '700', fontSize: 12, marginLeft: 4 },
   locationRow: { flexDirection: 'row', alignItems: 'center' },
   locationText: { color: '#64748B', fontSize: 12, marginLeft: 4 },
+  citiesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  cityCard: { width: (width - 64) / 3, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 12, alignItems: 'center' },
+  cityIconWrap: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  cityName: { fontWeight: '700', fontSize: 13, color: '#112D4E', textAlign: 'center' },
+  cityCountry: { color: '#94A3B8', fontSize: 10, marginTop: 2, textAlign: 'center' },
+  offersGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  offerCard: { width: (width - 56) / 2, backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 12 },
+  offerImage: { width: '100%', height: 80, backgroundColor: '#F1F5F9' },
+  offerInfo: { padding: 12 },
+  offerTitle: { fontWeight: '700', fontSize: 13, color: '#112D4E', marginBottom: 4 },
+  offerDiscount: { color: '#FF7A30', fontWeight: '800', fontSize: 12 },
   howItem: { alignItems: 'center', marginBottom: 32 },
   howIconWrap: { width: 64, height: 64, backgroundColor: '#F9FAFB', borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   howTitle: { fontSize: 18, fontWeight: '700', color: '#202124', marginBottom: 8 },

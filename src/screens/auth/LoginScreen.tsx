@@ -141,7 +141,9 @@ export default function LoginScreen({ navigation }: any) {
               <ActivityIndicator color="#FF7A30" />
             ) : (
               <>
-                <Icon name="google" size={22} color="#DB4437" />
+                <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' }}>
+                  <Text style={{ fontWeight: '900', fontSize: 16, color: '#4285F4' }}>G</Text>
+                </View>
                 <Text className="text-slate-700 font-bold text-base ml-3">Continue with Google</Text>
               </>
             )}

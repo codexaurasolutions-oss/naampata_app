@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityInd
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function ExpertQuoteScreen({ navigation }: any) {
   const [name, setName] = useState('');
@@ -12,6 +13,7 @@ export default function ExpertQuoteScreen({ navigation }: any) {
   const [description, setDescription] = useState('');
   const [preferredContact, setPreferredContact] = useState('phone');
   const [city, setCity] = useState('');
+  const { isAuthenticated } = useAuthStore();
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -40,6 +42,13 @@ export default function ExpertQuoteScreen({ navigation }: any) {
   });
 
   const handleSubmit = () => {
+    if (!isAuthenticated) {
+      Alert.alert('Login Required', 'Please login to submit an expert quote request.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => navigation.navigate('Auth', { screen: 'Login' }) },
+      ]);
+      return;
+    }
     if (!name.trim()) return Alert.alert('Error', 'Please enter your name.');
     if (!email.trim()) return Alert.alert('Error', 'Please enter your email.');
     if (!phone.trim()) return Alert.alert('Error', 'Please enter your phone number.');

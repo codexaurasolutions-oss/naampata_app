@@ -7,7 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 
 export default function DeleteAccountScreen({ navigation }: any) {
   const [confirmationText, setConfirmationText] = useState('');
-  const { logout } = useAuthStore();
+  const { logout, isAuthenticated } = useAuthStore();
 
   const deleteMutation = useMutation({
     mutationFn: () => api.users.deleteAccount(),
@@ -40,6 +40,30 @@ export default function DeleteAccountScreen({ navigation }: any) {
       ]
     );
   };
+
+  if (!isAuthenticated) {
+    return (
+      <View className="flex-1 bg-white">
+        <View className="bg-white pt-14 pb-4 px-4 shadow-sm z-10 border-b border-slate-100 flex-row items-center">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+            <Icon name="arrow-back" size={24} color="#112D4E" />
+          </TouchableOpacity>
+          <Text className="text-xl font-black text-[#112D4E]">Delete Account</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-6">
+          <Icon name="lock" size={64} color="#CBD5E1" />
+          <Text className="text-xl font-bold text-slate-800 mt-4 mb-2">Login Required</Text>
+          <Text className="text-slate-500 text-center mb-6">Please login to delete your account.</Text>
+          <TouchableOpacity
+            className="bg-[#FF7A30] rounded-xl px-8 py-4"
+            onPress={() => navigation.navigate('Auth', { screen: 'Login' })}
+          >
+            <Text className="text-white font-bold text-lg">Login</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
