@@ -169,6 +169,53 @@ export default function SearchResultsScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView style={styles.resultsContainer} showsVerticalScrollIndicator={false}>
+        {activeFiltersCount > 0 && (
+          <View style={styles.activeChipsRow}>
+            {selectedCategory && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>{categories.find((c: any) => c.id === selectedCategory)?.name || 'Category'}</Text>
+                <TouchableOpacity onPress={() => setSelectedCategory('')}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {selectedCountry && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>{selectedCountry}</Text>
+                <TouchableOpacity onPress={() => setSelectedCountry('')}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {selectedCity && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>{selectedCity}</Text>
+                <TouchableOpacity onPress={() => setSelectedCity('')}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {openNow && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Open Now</Text>
+                <TouchableOpacity onPress={() => setOpenNow(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {topRated && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Top Rated</Text>
+                <TouchableOpacity onPress={() => setTopRated(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {verifiedOnly && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>Verified</Text>
+                <TouchableOpacity onPress={() => setVerifiedOnly(false)}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+            {hasLocation && (
+              <View style={styles.activeChip}>
+                <Text style={styles.activeChipText}>{selectedRadius}km</Text>
+                <TouchableOpacity onPress={() => {}}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={styles.resultHeader}>
           <Text style={styles.resultTitle}>
             {searchQuery || activeFiltersCount > 0 ? 'Results' : 'Recommended'}
@@ -378,6 +425,9 @@ const styles = StyleSheet.create({
   chipTextActiveDark: { color: '#FFFFFF' },
   chipTextNearMe: { color: '#FF7A30' },
   resultsContainer: { flex: 1, paddingHorizontal: 16, paddingTop: 24 },
+  activeChipsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16, gap: 8 },
+  activeChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: '#FF7A30', gap: 6 },
+  activeChipText: { fontSize: 12, fontWeight: '700', color: '#FF7A30' },
   resultHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   resultTitle: { fontSize: 20, fontWeight: '700', color: '#1E293B' },
   resultCount: { fontSize: 14, fontWeight: '500', color: '#94A3B8' },

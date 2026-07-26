@@ -28,7 +28,7 @@ const COUNTRY_CODES = [
   { code: '+27', country: 'South Africa', flag: '🇿🇦' },
 ];
 
-export default function RegisterScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation, route }: any) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -37,6 +37,7 @@ export default function RegisterScreen({ navigation }: any) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [referralCode, setReferralCode] = useState(route?.params?.referralCode || '');
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -88,6 +89,7 @@ export default function RegisterScreen({ navigation }: any) {
         email: email.trim().toLowerCase(),
         phone: fullPhone,
         password,
+        referralCode: referralCode || undefined,
       });
       Alert.alert('Registration Successful', 'Please check your email for a verification code.', [
         { text: 'Verify Now', onPress: () => navigation.navigate('VerifyEmail', { email }) },
@@ -208,7 +210,7 @@ export default function RegisterScreen({ navigation }: any) {
           </FadeInView>
 
           <FadeInView delay={320} direction="up">
-            <View style={{ marginBottom: 24 }}>
+            <View style={{ marginBottom: 16 }}>
               <Text style={s.label}>RE-TYPE PASSWORD</Text>
               <View style={s.inputBox}>
                 <Icon name="lock" size={20} color="#CBD5E1" />
@@ -223,6 +225,23 @@ export default function RegisterScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                   <Icon name={showConfirmPassword ? "visibility" : "visibility-off"} size={20} color="#94A3B8" />
                 </TouchableOpacity>
+              </View>
+            </View>
+          </FadeInView>
+
+          <FadeInView delay={340} direction="up">
+            <View style={{ marginBottom: 24 }}>
+              <Text style={s.label}>REFERRAL CODE (OPTIONAL)</Text>
+              <View style={s.inputBox}>
+                <Icon name="card-giftcard" size={20} color="#CBD5E1" />
+                <TextInput
+                  placeholder="Enter referral code"
+                  style={s.input}
+                  value={referralCode}
+                  onChangeText={setReferralCode}
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="characters"
+                />
               </View>
             </View>
           </FadeInView>

@@ -6,7 +6,9 @@ import { api } from '../../services/api';
 import { googleLogin } from '../../hooks/useGoogleAuth';
 import FadeInView from '../../components/FadeInView';
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation, route }: any) {
+  const redirectScreen = route?.params?.redirectScreen;
+  const redirectParams = route?.params?.redirectParams;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,9 @@ export default function LoginScreen({ navigation }: any) {
     setLoading(true);
     try {
       await login({ email, password });
+      if (redirectScreen) {
+        navigation.replace(redirectScreen, redirectParams || {});
+      }
     } catch (error: any) {
       const status = error.response?.status;
       const msg = error.response?.data?.message;

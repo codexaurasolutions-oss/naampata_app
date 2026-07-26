@@ -322,6 +322,39 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           </FadeInView>
         </View>
+
+        <View style={s.sectionWhite}>
+          <FadeInView delay={100} direction="up">
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>What People Say</Text>
+              <View style={s.sectionDivider} />
+            </View>
+          </FadeInView>
+          {[
+            { name: 'Ahmed K.', text: 'Found a great electrician in minutes. Very reliable platform!', rating: 5 },
+            { name: 'Sara M.', text: 'Best local business directory in Pakistan. Love the reviews feature.', rating: 5 },
+            { name: 'Usman R.', text: 'Listed my business and got 10x more customers. Highly recommended!', rating: 5 },
+          ].map((t, idx) => (
+            <FadeInView key={idx} delay={200 + idx * 100} direction="up">
+              <View style={s.testimonialCard}>
+                <View style={s.testimonialStars}>{[1,2,3,4,5].map(s => <Icon key={s} name="star" size={14} color="#F59E0B" />)}</View>
+                <Text style={s.testimonialText}>"{t.text}"</Text>
+                <Text style={s.testimonialName}>— {t.name}</Text>
+              </View>
+            </FadeInView>
+          ))}
+        </View>
+
+        <View style={{ backgroundColor: '#112D4E', marginHorizontal: 16, borderRadius: 24, padding: 32, marginBottom: 40, alignItems: 'center' }}>
+          <FadeInView delay={100} direction="up">
+            <Icon name="business-center" size={48} color="#FF7A30" />
+            <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '900', textAlign: 'center', marginTop: 16, marginBottom: 8 }}>Own a Business?</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginBottom: 20, lineHeight: 20 }}>List your business for free and reach thousands of customers in your area.</Text>
+            <TouchableOpacity style={{ backgroundColor: '#FF7A30', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14 }} onPress={() => navigation.navigate('Auth', { screen: 'Register' })}>
+              <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 16 }}>Sign Up Free</Text>
+            </TouchableOpacity>
+          </FadeInView>
+        </View>
       </ScrollView>
     </View>
   );
@@ -383,4 +416,8 @@ const s = StyleSheet.create({
   howIconWrap: { width: 64, height: 64, backgroundColor: '#F9FAFB', borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   howTitle: { fontSize: 18, fontWeight: '700', color: '#202124', marginBottom: 8 },
   howSubtitle: { color: '#70757A', fontSize: 14, textAlign: 'center', paddingHorizontal: 32 },
+  testimonialCard: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+  testimonialStars: { flexDirection: 'row', marginBottom: 8, gap: 2 },
+  testimonialText: { color: '#475569', fontSize: 14, lineHeight: 22, marginBottom: 8 },
+  testimonialName: { color: '#94A3B8', fontWeight: '700', fontSize: 13 },
 });
