@@ -21,8 +21,22 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        if (refreshToken) {
+          const res = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+          const { accessToken } = res.data;
+          await AsyncStorage.setItem('token', accessToken);
+          if (res.data.refreshToken) await AsyncStorage.setItem('refreshToken', res.data.refreshToken);
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return axiosInstance(originalRequest);
+        }
+      } catch (refreshError) {}
       await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('refreshToken');
       await AsyncStorage.removeItem('user');
       try {
         const { useAuthStore } = require('../stores/authStore');
@@ -49,6 +63,8 @@ export const api = {
     googleLogin: (data: any) => api.post<any>('/auth/google', data),
     me: () => api.get<any>('/auth/me'),
     logout: () => api.post<any>('/auth/logout'),
+    refresh: () => api.post<any>('/auth/refresh'),
+    ping: () => api.post<any>('/auth/ping'),
   },
 
   users: {
@@ -109,6 +125,11 @@ export const api = {
     updateImage: (id: string, data: any) => api.patch<any>(`/businesses/${id}/image`, data),
     getAlbums: (id: string) => api.get<any>(`/businesses/${id}/albums`),
     createAlbum: (id: string, data: any) => api.post<any>(`/businesses/${id}/albums`, data),
+    updateAlbum: (id: string, albumId: string, data: any) => api.patch<any>(`/businesses/${id}/albums/${albumId}`, data),
+    deleteAlbum: (id: string, albumId: string) => api.delete<any>(`/businesses/${id}/albums/${albumId}`),
+    reorderAlbumImages: (id: string, albumId: string, images: string[]) => api.patch<any>(`/businesses/${id}/albums/${albumId}/images`, { images }),
+    getAmenities: () => api.get<any>('/businesses/amenities/all'),
+    createAmenity: (data: any) => api.post<any>('/businesses/amenities', data),
   },
 
   reviews: {
@@ -165,6 +186,9 @@ export const api = {
     createPricingCheckout: (planId: string) => api.post<any>('/subscriptions/pricing/checkout', { planId }),
     changePlan: (planId: string) => api.post<any>('/subscriptions/change', { planId }),
     verifyPayment: (sessionId: string) => api.post<any>('/subscriptions/verify', { sessionId }),
+    getActivePromotions: () => api.get<any>('/subscriptions/active-promotions'),
+    getInvoice: (id: string) => api.get<any>(`/subscriptions/invoice/${id}`),
+    getTransactions: () => api.get<any>('/subscriptions/transactions'),
   },
 
   offers: {
@@ -222,6 +246,10 @@ export const api = {
     replyToComment: (commentId: string, content: string) => api.post<any>(`/vendor/comments/${commentId}/reply`, { content }),
     updateReply: (replyId: string, content: string) => api.patch<any>(`/vendor/comments/reply/${replyId}`, { content }),
     deleteReply: (replyId: string) => api.delete<any>(`/vendor/comments/reply/${replyId}`),
+    getPublic: (params: any = {}) => {
+      const query = new URLSearchParams(params).toString();
+      return api.get<any>(`/comments/public?${query}`);
+    },
   },
 
   broadcasts: {
@@ -231,6 +259,7 @@ export const api = {
     getVendorStats: () => api.get<any>('/broadcasts/vendor/stats'),
     respond: (id: string, data: any) => api.post<any>(`/broadcasts/${id}/respond`, data),
     getResponses: (id: string) => api.get<any>(`/broadcasts/${id}/responses`),
+    getAnalytics: () => api.get<any>('/broadcasts/analytics'),
   },
 
   follows: {
@@ -262,11 +291,16 @@ export const api = {
     requestPayout: (data: any) => api.post<any>('/affiliate/payouts', data),
     applyReferral: (code: string) => api.post<any>('/affiliate/apply-referral', { code }),
     trackClick: (code: string) => api.post<any>('/affiliate/track-click', { code }),
+    getSettings: () => api.get<any>('/affiliate/settings'),
   },
 
   demand: {
     logSearch: (data: any) => api.post<any>('/demand/log', data),
     getNearby: (lat: number, lng: number) => api.get<any>(`/demand/nearby?lat=${lat}&lng=${lng}`),
+    getSummaryAI: () => api.get<any>('/demand/summary-ai'),
+    getInsights: () => api.get<any>('/demand/insights'),
+    getOverview: () => api.get<any>('/demand/overview'),
+    getHeatmap: () => api.get<any>('/demand/heatmap'),
   },
 
   vendors: {
@@ -274,12 +308,19 @@ export const api = {
     getDashboardStats: () => api.get<any>('/vendors/dashboard-stats'),
     becomeVendor: (data: any) => api.post<any>('/vendors/become-vendor', data),
     updateProfile: (data: any) => api.patch<any>('/vendors/profile', data),
+    getMyProfile: () => api.get<any>('/vendors/profile'),
+    getByCity: (city: string) => api.get<any>(`/vendors/by-city?city=${encodeURIComponent(city)}`),
+    submitVerification: (data: any) => api.post<any>('/vendors/verify', data),
+    getAllSlugs: () => api.get<any>('/vendors/slugs/all'),
   },
 
   promotions: {
     getVisibilityRate: () => api.get<any>('/promotions/visibility-rate'),
     calculatePrice: (data: any) => api.post<any>('/promotions/calculate', data),
     getPricingRules: () => api.get<any>('/promotions/pricing-rules'),
+    calculateVisibility: (data: any) => api.post<any>('/promotions/calculate-visibility', data),
+    book: (data: any) => api.post<any>('/promotions/book', data),
+    verifySession: (sessionId: string) => api.get<any>(`/promotions/verify-session?sessionId=${sessionId}`),
   },
 
   location: {
@@ -299,12 +340,14 @@ export const api = {
     getQuestions: () => api.get<any>('/business-setup/questions'),
     getStatus: () => api.get<any>('/business-setup/status'),
     saveAnswers: (data: any) => api.post<any>('/business-setup/answers', data),
+    duplicateCheck: (data: any) => api.post<any>('/business-setup/duplicate-check', data),
   },
 
   addressConfig: {
     getCountries: () => api.get<any>('/address-config/countries'),
     getConfig: (countryCode: string) => api.get<any>(`/address-config/${countryCode}`),
     validatePostalCode: (countryCode: string, postalCode: string) => api.get<any>(`/address-config/${countryCode}/validate-postal-code?postalCode=${encodeURIComponent(postalCode)}`),
+    getSupported: () => api.get<any>('/address-config/supported'),
   },
 
   health: {
