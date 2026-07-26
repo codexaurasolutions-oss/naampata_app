@@ -31,9 +31,9 @@ export default function AnalyticsScreen({ navigation }: any) {
     queryFn: () => api.leads.getStats(),
   });
 
-  const stats = statsData?.data || {};
-  const demand = demandData?.data || [];
-  const leadStats = leadStatsData?.data || {};
+  const stats = statsData || {};
+  const demand = demandData || [];
+  const leadStats = leadStatsData || {};
 
   const onRefresh = async () => {
     setRefreshing(true);

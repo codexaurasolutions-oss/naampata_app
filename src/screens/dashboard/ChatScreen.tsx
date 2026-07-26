@@ -24,7 +24,7 @@ export default function ChatScreen({ route, navigation }: any) {
 
   useEffect(() => {
     if (initialData) {
-      setMessages(initialData?.data || initialData || []);
+      setMessages(initialData || []);
     }
   }, [initialData]);
 
@@ -93,7 +93,7 @@ export default function ChatScreen({ route, navigation }: any) {
       id: `temp_${Date.now()}`,
       content,
       senderId: user?.id,
-      sender: { id: user?.id, fullName: user?.fullName, avatar: user?.avatar },
+      sender: { id: user?.id, fullName: user?.fullName, avatarUrl: user?.avatarUrl },
       createdAt: new Date().toISOString(),
       isOptimistic: true,
     };

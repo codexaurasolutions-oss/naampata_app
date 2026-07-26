@@ -2,10 +2,8 @@ import React, { useEffect } from 'react';
 import { View, Text, Animated, Easing, Image } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
 
-const LOGO_URL = 'https://local-business-listing-directory-production.up.railway.app/logo.png';
-
 export default function SplashScreen({ navigation }: any) {
-  const { checkSession } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
   const fadeValue = new Animated.Value(0);
   const scaleValue = new Animated.Value(0.8);
 
@@ -24,15 +22,16 @@ export default function SplashScreen({ navigation }: any) {
       }),
     ]).start();
 
-    const initApp = async () => {
-      await checkSession();
-      setTimeout(() => {
+    const timer = setTimeout(() => {
+      if (isAuthenticated) {
         navigation.replace('Main');
-      }, 2000);
-    };
+      } else {
+        navigation.replace('Auth');
+      }
+    }, 2000);
 
-    initApp();
-  }, []);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#112D4E', alignItems: 'center', justifyContent: 'center' }}>

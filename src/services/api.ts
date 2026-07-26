@@ -24,6 +24,10 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
+      try {
+        const { useAuthStore } = require('../stores/authStore');
+        useAuthStore.getState().logout();
+      } catch (e) {}
     }
     return Promise.reject(error);
   }

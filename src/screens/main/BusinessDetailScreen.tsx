@@ -62,7 +62,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   });
 
   const followMutation = useMutation({
-    mutationFn: () => followData?.data?.isFollowing ? api.follows.unfollow(id) : api.follows.follow(id),
+    mutationFn: () => followData?.isFollowing ? api.follows.unfollow(id) : api.follows.follow(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followCheck', id] });
       queryClient.invalidateQueries({ queryKey: ['followerCount', id] });
@@ -107,13 +107,13 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to submit review.'),
   });
 
-  const business = data?.data || data || {};
-  const reviews = reviewsData?.data || reviewsData || [];
-  const qa = qaData?.data || qaData || [];
-  const offers = offersData?.data || offersData || [];
-  const similar = similarData?.data || similarData || [];
-  const isFollowing = followData?.data?.isFollowing || false;
-  const followerCount = followerCountData?.data?.count || business.followersCount || 0;
+  const business = data || {};
+  const reviews = reviewsData || [];
+  const qa = qaData || [];
+  const offers = offersData || [];
+  const similar = similarData || [];
+  const isFollowing = followData?.isFollowing || false;
+  const followerCount = followerCountData?.count || business.followersCount || 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -381,8 +381,8 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                 <View key={review.id} className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
                   <View className="flex-row items-center mb-2">
                     <View className="w-10 h-10 bg-slate-200 rounded-full items-center justify-center mr-3">
-                      {review.user?.avatar ? (
-                        <Image source={{ uri: review.user.avatar }} className="w-10 h-10 rounded-full" />
+                      {review.user?.avatarUrl ? (
+                        <Image source={{ uri: review.user.avatarUrl }} className="w-10 h-10 rounded-full" />
                       ) : (
                         <Icon name="person" size={20} color="#94A3B8" />
                       )}

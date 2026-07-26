@@ -41,8 +41,8 @@ export default function SavedScreen({ navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to remove saved offer.'),
   });
 
-  const businesses = favoritesData?.data || [];
-  const savedOffersRaw = savedOffersData?.data || [];
+  const businesses = favoritesData || [];
+  const savedOffersRaw = savedOffersData || [];
   const offers = savedOffersRaw.filter((item: any) => item._type === 'deal' || item.type === 'deal' || (!item.startDate && !item.eventDate));
   const events = savedOffersRaw.filter((item: any) => item._type === 'event' || item.type === 'event' || item.startDate || item.eventDate);
 

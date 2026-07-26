@@ -36,7 +36,7 @@ export default function CommentsScreen({ navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to delete reply.'),
   });
 
-  const comments = data?.data || [];
+  const comments = data || [];
 
   const onRefresh = async () => {
     setRefreshing(true);

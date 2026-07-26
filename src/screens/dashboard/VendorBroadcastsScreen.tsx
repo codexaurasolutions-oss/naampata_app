@@ -33,8 +33,8 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
     onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to respond.'),
   });
 
-  const broadcasts = inboxData?.data || [];
-  const stats = statsData?.data || {};
+  const broadcasts = inboxData || [];
+  const stats = statsData || {};
 
   const onRefresh = async () => {
     setRefreshing(true);

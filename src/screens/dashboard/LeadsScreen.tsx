@@ -12,7 +12,7 @@ export default function LeadsScreen({ navigation }: any) {
     queryFn: () => api.leads.getForVendor({ status: filter === 'all' ? undefined : filter }),
   });
 
-  const leads = data?.data || [];
+  const leads = data || [];
 
   return (
     <View className="flex-1 bg-[#FDFCFB]">

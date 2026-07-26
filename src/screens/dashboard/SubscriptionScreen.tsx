@@ -24,8 +24,8 @@ export default function SubscriptionScreen({ navigation }: any) {
     queryFn: () => api.subscriptions.getMyInvoices(),
   });
 
-  const plans = plansData?.data || plansData || [];
-  const invoices = invoicesData?.data || [];
+  const plans = plansData || [];
+  const invoices = invoicesData || [];
 
   const checkoutMutation = useMutation({
     mutationFn: (planId: string) => api.subscriptions.createCheckout(planId),

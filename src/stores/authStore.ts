@@ -5,12 +5,17 @@ import { api } from '../services/api';
 interface User {
   id: string;
   email: string;
-  fullName?: string;
-  firstName?: string;
-  lastName?: string;
+  fullName: string;
+  phone?: string;
   role: 'user' | 'vendor' | 'admin' | 'superadmin';
-  avatar?: string;
-  isOnline?: boolean;
+  avatarUrl?: string;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  provider?: string;
+  country?: string;
+  city?: string;
+  state?: string;
+  isActive?: boolean;
 }
 
 interface AuthState {
@@ -39,12 +44,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.auth.login(credentials);
-      const { user, token } = response.data;
-      await AsyncStorage.setItem('token', token);
+      const user = response.user;
+      const accessToken = response.tokens?.accessToken || response.token;
+      if (!accessToken) throw new Error('No token received from server');
+      await AsyncStorage.setItem('token', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
-      set({ isLoading: false, error: error.response?.data?.message || 'Login failed' });
+      const msg = error.response?.data?.message || error.message || 'Login failed';
+      set({ isLoading: false, error: msg });
       throw error;
     }
   },
@@ -53,12 +61,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.auth.register(userData);
-      const { user, token } = response.data;
-      await AsyncStorage.setItem('token', token);
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      set({ isLoading: false });
     } catch (error: any) {
-      set({ isLoading: false, error: error.response?.data?.message || 'Registration failed' });
+      const msg = error.response?.data?.message || error.message || 'Registration failed';
+      set({ isLoading: false, error: msg });
       throw error;
     }
   },
@@ -67,12 +73,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.auth.googleLogin({ idToken });
-      const { user, token } = response.data;
-      await AsyncStorage.setItem('token', token);
+      const user = response.user;
+      const accessToken = response.tokens?.accessToken || response.token;
+      if (!accessToken) throw new Error('No token received from server');
+      await AsyncStorage.setItem('token', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
-      set({ isLoading: false, error: error.response?.data?.message || 'Google login failed' });
+      const msg = error.response?.data?.message || error.message || 'Google login failed';
+      set({ isLoading: false, error: msg });
       throw error;
     }
   },
@@ -92,9 +101,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await api.users.getProfile();
       if (response) {
-        const user = response.data || response;
-        await AsyncStorage.setItem('user', JSON.stringify(user));
-        set({ user });
+        const user = response.user || response;
+        if (user && user.id) {
+          await AsyncStorage.setItem('user', JSON.stringify(user));
+          set({ user });
+        }
       }
     } catch (error: any) {
       console.error('Profile sync failed', error);

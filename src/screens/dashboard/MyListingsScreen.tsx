@@ -13,7 +13,7 @@ export default function MyListingsScreen({ navigation }: any) {
     queryFn: () => api.listings.getMyListings(),
   });
 
-  const listings = data?.data || [];
+  const listings = data || [];
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.listings.delete(id),

@@ -9,7 +9,7 @@ import * as ImagePicker from 'react-native-image-picker';
 export default function SettingsScreen({ navigation }: any) {
   const { user, isAuthenticated, logout } = useAuthStore();
   
-  const [fullName, setFullName] = useState(user?.fullName || user?.firstName || '');
+  const [fullName, setFullName] = useState(user?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -165,9 +165,9 @@ export default function SettingsScreen({ navigation }: any) {
         {/* Avatar Upload */}
         <View className="items-center mb-8">
           <View className="w-24 h-24 rounded-full items-center justify-center mb-4 overflow-hidden border-4 border-white shadow-sm relative">
-            {user?.avatar ? (
+            {user?.avatarUrl ? (
               <Image
-                source={{ uri: user.avatar }}
+                source={{ uri: user.avatarUrl }}
                 className="w-full h-full"
                 resizeMode="cover"
               />

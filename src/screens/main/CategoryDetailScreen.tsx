@@ -38,10 +38,10 @@ export default function CategoryDetailScreen({ route, navigation }: any) {
   });
 
   const { data: citiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
-  const cities = citiesData?.data || [];
+  const cities = citiesData || [];
 
-  const category = categoryData?.data || {};
-  const businesses = businessesData?.data || [];
+  const category = categoryData || {};
+  const businesses = businessesData || [];
 
   return (
     <View className="flex-1 bg-[#FDFCFB]">

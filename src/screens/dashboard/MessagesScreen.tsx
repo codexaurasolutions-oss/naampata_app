@@ -16,7 +16,7 @@ export default function MessagesScreen({ navigation }: any) {
     queryFn: () => isVendor ? api.chat.getVendorConversations() : api.chat.getUserConversations(),
   });
 
-  const conversations = data?.data || [];
+  const conversations = data || [];
 
   const filteredConvos = conversations.filter((c: any) => {
     const otherParty = isVendor ? c.user : c.vendor;
@@ -77,7 +77,7 @@ export default function MessagesScreen({ navigation }: any) {
               >
                 <View className="relative">
                   <Image 
-                    source={{ uri: otherParty?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop' }}
+                    source={{ uri: otherParty?.avatarUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop' }}
                     className="w-14 h-14 rounded-full bg-slate-200"
                   />
                   {otherParty?.isOnline && (

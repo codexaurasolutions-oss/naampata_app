@@ -16,7 +16,7 @@ export default function CustomerNotesScreen({ navigation }: any) {
     queryFn: () => api.chat.getVendorConversations(),
   });
 
-  const conversations = convosData?.data || [];
+  const conversations = convosData || [];
 
   const { data: notesData, isLoading: loadingNotes } = useQuery({
     queryKey: ['conversationNotes', selectedConversation],
@@ -36,7 +36,7 @@ export default function CustomerNotesScreen({ navigation }: any) {
     onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to add note.'),
   });
 
-  const notes = notesData?.data || [];
+  const notes = notesData || [];
 
   const onRefresh = async () => {
     setRefreshing(true);

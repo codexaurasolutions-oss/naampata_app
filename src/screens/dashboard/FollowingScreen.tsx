@@ -24,7 +24,7 @@ export default function FollowingScreen({ navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to unfollow.'),
   });
 
-  const follows = data?.data || [];
+  const follows = data || [];
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -81,20 +81,20 @@ export default function FollowingScreen({ navigation }: any) {
                 onPress={() => navigation.navigate('BusinessDetail', { id: business.id })}
               >
                 <Image
-                  source={{ uri: business.coverImage || business.logo || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
+                  source={{ uri: business.coverImageUrl || business.logoUrl || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
                   className="w-20 h-20 rounded-2xl bg-slate-200"
                 />
                 <View className="flex-1 ml-4 justify-center">
-                  <Text className="text-lg font-bold text-[#112D4E]" numberOfLines={1}>{business.name}</Text>
+                  <Text className="text-lg font-bold text-[#112D4E]" numberOfLines={1}>{business.title}</Text>
                   <Text className="text-slate-400 text-xs font-medium">{business.category?.name || 'Business'}</Text>
                   <View className="flex-row items-center mt-1">
                     <Icon name="star" size={14} color="#F59E0B" />
-                    <Text className="text-slate-700 font-bold text-xs ml-1">{Number(business.rating || 0).toFixed(1)}</Text>
+                    <Text className="text-slate-700 font-bold text-xs ml-1">{Number(business.averageRating || 0).toFixed(1)}</Text>
                   </View>
                 </View>
                 <TouchableOpacity
                   className="bg-red-50 px-4 py-2 rounded-xl border border-red-100"
-                  onPress={() => handleUnfollow(business.id, business.name)}
+                  onPress={() => handleUnfollow(business.id, business.title)}
                 >
                   <Text className="text-red-500 font-bold text-xs">Unfollow</Text>
                 </TouchableOpacity>

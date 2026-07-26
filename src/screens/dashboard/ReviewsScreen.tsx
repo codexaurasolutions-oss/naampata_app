@@ -33,7 +33,7 @@ export default function ReviewsScreen({ navigation }: any) {
     }
   };
 
-  const reviews = data?.data || [];
+  const reviews = data || [];
 
   const avgRating = reviews.length
     ? (reviews.reduce((acc: number, cur: any) => acc + (cur.rating || 0), 0) / reviews.length).toFixed(1)

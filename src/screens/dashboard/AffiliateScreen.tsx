@@ -42,9 +42,9 @@ export default function AffiliateScreen({ navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to request payout.'),
   });
 
-  const stats = statsData?.data || { clicks: 0, signups: 0, earnings: 0, pendingPayout: 0, referralCode: 'NM-XXX', isJoined: false };
-  const referrals = referralsData?.data || [];
-  const payouts = payoutsData?.data || [];
+  const stats = statsData || { clicks: 0, signups: 0, earnings: 0, pendingPayout: 0, referralCode: 'NM-XXX', isJoined: false };
+  const referrals = referralsData || [];
+  const payouts = payoutsData || [];
 
   const handleShare = async () => {
     try {

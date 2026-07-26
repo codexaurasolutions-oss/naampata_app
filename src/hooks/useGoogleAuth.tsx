@@ -57,11 +57,8 @@ export const googleLogin = async () => {
 
 export const googleLogout = async () => {
   try {
-    const isSignedIn = GoogleSignin.isSignedIn();
-    if (isSignedIn) {
-      await GoogleSignin.revokeAccess();
-      await GoogleSignin.signOut();
-    }
+    await GoogleSignin.revokeAccess();
+    await GoogleSignin.signOut();
   } catch (error) {
     console.warn('[GoogleSignIn] Logout error:', error);
   }

@@ -31,7 +31,7 @@ export default function ManageOffersScreen({ navigation }: any) {
     enabled: activeTab === 'events',
   });
 
-  const items = activeTab === 'deals' ? (dealsData?.data || []) : (eventsData?.data || []);
+  const items = activeTab === 'deals' ? (dealsData || []) : (eventsData || []);
   const isLoading = activeTab === 'deals' ? loadingDeals : loadingEvents;
 
   const createDealMutation = useMutation({

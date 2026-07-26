@@ -43,7 +43,7 @@ export default function LeadDetailsScreen({ route, navigation }: any) {
     onError: () => Alert.alert('Error', 'Failed to send reply.'),
   });
 
-  const notes = notesData?.data || [];
+  const notes = notesData || [];
 
   return (
     <KeyboardAvoidingView

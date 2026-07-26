@@ -34,11 +34,11 @@ export default function DashboardScreen({ navigation }: any) {
     queryFn: () => api.listings.getMyListings(),
   });
 
-  const vendorStats = vendorStatsData?.data || {};
-  const leadStats = leadStatsData?.data || {};
-  const broadcastStats = broadcastStatsData?.data || {};
-  const subscription = subData?.data;
-  const listings = listingsData?.data || [];
+  const vendorStats = vendorStatsData || {};
+  const leadStats = leadStatsData || {};
+  const broadcastStats = broadcastStatsData || {};
+  const subscription = subData;
+  const listings = listingsData || [];
 
   const profileCompletion = vendorStats.profileCompletion || vendorStats.completionPercentage || 0;
 
@@ -54,14 +54,14 @@ export default function DashboardScreen({ navigation }: any) {
         <View className="flex-row justify-between items-center mb-6">
           <View className="flex-1">
             <Text className="text-white/80 font-medium">Welcome back,</Text>
-            <Text className="text-white font-bold text-2xl" numberOfLines={1}>{user?.fullName || user?.firstName || 'Business Owner'}</Text>
+            <Text className="text-white font-bold text-2xl" numberOfLines={1}>{user?.fullName || 'Business Owner'}</Text>
           </View>
           <TouchableOpacity
             className="w-12 h-12 bg-white/10 rounded-full items-center justify-center border border-white/20"
             onPress={() => navigation.navigate('Settings')}
           >
             <Image
-              source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop' }}
+              source={{ uri: user?.avatarUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop' }}
               className="w-10 h-10 rounded-full"
             />
           </TouchableOpacity>

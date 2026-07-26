@@ -10,7 +10,7 @@ export default function DealsScreen({ navigation }: any) {
     queryFn: () => api.deals.getVendorDeals(),
   });
 
-  const deals = data?.data || [];
+  const deals = data || [];
 
   return (
     <View className="flex-1 bg-[#FDFCFB]">

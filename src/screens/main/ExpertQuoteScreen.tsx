@@ -17,13 +17,13 @@ export default function ExpertQuoteScreen({ navigation }: any) {
     queryKey: ['categories'],
     queryFn: () => api.categories.getAll(),
   });
-  const categories = categoriesData?.data || [];
+  const categories = categoriesData || [];
 
   const { data: citiesData } = useQuery({
     queryKey: ['cities'],
     queryFn: () => api.cities.getAll(),
   });
-  const cities = citiesData?.data || [];
+  const cities = citiesData || [];
 
   const submitMutation = useMutation({
     mutationFn: () => api.expertQuote.create({

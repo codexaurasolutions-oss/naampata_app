@@ -50,7 +50,7 @@ export default function NotificationsScreen({ navigation }: any) {
     }
   });
 
-  const notifications = data?.data || [];
+  const notifications = data || [];
 
   const handlePress = (note: any) => {
     if (!note.isRead && note.id) {

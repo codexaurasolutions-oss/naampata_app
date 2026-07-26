@@ -14,7 +14,7 @@ export default function EditListingScreen({ route, navigation }: any) {
     enabled: !!listingId,
   });
 
-  const listing = data?.data || {};
+  const listing = data || {};
 
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');

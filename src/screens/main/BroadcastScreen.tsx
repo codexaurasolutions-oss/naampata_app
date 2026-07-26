@@ -17,8 +17,8 @@ export default function BroadcastScreen({ navigation }: any) {
   const { data: categoriesData } = useQuery({ queryKey: ['categories'], queryFn: () => api.categories.getAll() });
   const { data: citiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
   
-  const categories = categoriesData?.data || categoriesData || [];
-  const cities = citiesData?.data || citiesData || [];
+  const categories = categoriesData || [];
+  const cities = citiesData || [];
 
   const broadcastMutation = useMutation({
     mutationFn: (data: any) => api.expertQuote.create(data), // Using the existing quote API for broadcasts
