@@ -66,6 +66,14 @@ export default function Step07Address() {
         value={formData.address?.pincode}
         onChangeText={(text) => handleAddressChange('pincode', text)}
       />
+
+      <Text className="text-textPrimary font-semibold mb-2">Landmark (Optional)</Text>
+      <TextInput 
+        className="bg-white border border-border rounded-xl px-4 py-3 mb-4 text-textPrimary"
+        placeholder="e.g. Near Main Mosque, Opposite Park"
+        value={(formData as any).landmark || ''}
+        onChangeText={(text) => updateFormData({ landmark: text } as any)}
+      />
     </ScrollView>
   );
 }

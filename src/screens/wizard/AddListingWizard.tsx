@@ -93,6 +93,8 @@ export default function AddListingWizard({ navigation }: any) {
         franchiseOpportunities: formData.expansion.franchiseAvailable || undefined,
         lookingForDealers: formData.expansion.dealerInquiries || undefined,
         isImporterExporter: formData.expansion.importerExporter || undefined,
+        landmark: (formData as any).landmark?.trim() || undefined,
+        businessEmail: (formData as any).businessEmail?.trim() || undefined,
         legalConsentAccepted: true,
         legalConsentAcceptedAt: new Date().toISOString(),
         legalConsentTerms: true,

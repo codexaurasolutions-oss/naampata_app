@@ -65,6 +65,19 @@ export default function Step09Contact() {
           onChangeText={(text) => handleContactChange('website', text)}
         />
       </View>
+
+      <Text className="text-textPrimary font-semibold mb-2">Public Business Email (Optional)</Text>
+      <View className="bg-white flex-row items-center rounded-xl px-4 py-3 mb-4 shadow-sm border border-border">
+        <Icon name="alternate-email" size={20} color="#FF7A30" />
+        <TextInput 
+          placeholder="Displayed on your listing" 
+          className="flex-1 ml-3 text-textPrimary text-base"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={(formData as any).businessEmail || ''}
+          onChangeText={(text) => updateFormData({ businessEmail: text } as any)}
+        />
+      </View>
     </ScrollView>
   );
 }

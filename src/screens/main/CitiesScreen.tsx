@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 export default function CitiesScreen({ navigation }: any) {
   const [search, setSearch] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [showCount, setShowCount] = useState(20);
 
   const { data, isLoading } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
   const { data: countriesData } = useQuery({ queryKey: ['countries'], queryFn: () => api.cities.getCountries() });
@@ -19,8 +20,18 @@ export default function CitiesScreen({ navigation }: any) {
     const matchesCountry = !selectedCountry || c.country === selectedCountry;
     return matchesSearch && matchesCountry;
   });
+  const visibleCities = filteredCities.slice(0, showCount);
 
   const uniqueCountries = [...new Set(cities.map((c: any) => c.country).filter(Boolean))] as string[];
+
+  const GRADIENTS = [
+    ['#FF7A30', '#F97316'],
+    ['#3B82F6', '#2563EB'],
+    ['#8B5CF6', '#7C3AED'],
+    ['#EC4899', '#DB2777'],
+    ['#14B8A6', '#0D9488'],
+    ['#F59E0B', '#D97706'],
+  ];
 
   return (
     <View style={s.container}>
@@ -59,24 +70,35 @@ export default function CitiesScreen({ navigation }: any) {
       <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
         {isLoading ? (
           <ActivityIndicator color="#FF7A30" style={{ marginVertical: 40 }} />
-        ) : filteredCities.length > 0 ? (
-          filteredCities.map((city: any, index: number) => (
-            <TouchableOpacity key={city.id || index} style={s.cityCard} onPress={() => navigation.navigate('Search', { city: city.name, country: city.country })}>
-              <View style={s.cityIconWrap}>
-                <Icon name="location-city" size={24} color="#FF7A30" />
-              </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={s.cityName}>{city.name}</Text>
-                <Text style={s.cityMeta}>{city.state ? `${city.state}, ` : ''}{city.country || ''}</Text>
-              </View>
-              <Icon name="chevron-right" size={22} color="#CBD5E1" />
-            </TouchableOpacity>
-          ))
+        ) : visibleCities.length > 0 ? (
+          visibleCities.map((city: any, index: number) => {
+            const gradient = GRADIENTS[index % GRADIENTS.length];
+            return (
+              <TouchableOpacity key={city.id || index} style={[s.cityCard, { backgroundColor: gradient[0] + '10', borderColor: gradient[0] + '20' }]} onPress={() => navigation.navigate('Search', { city: city.name, country: city.country })}>
+                <View style={[s.cityIconWrap, { backgroundColor: gradient[0] + '20' }]}>
+                  <Icon name="location-city" size={24} color={gradient[0]} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={[s.cityName, { color: gradient[1] }]}>{city.name}</Text>
+                  <Text style={s.cityMeta}>{city.state ? `${city.state}, ` : ''}{city.country || ''}</Text>
+                </View>
+                <Icon name="chevron-right" size={22} color={gradient[0]} />
+              </TouchableOpacity>
+            );
+          })
         ) : (
           <View style={{ alignItems: 'center', marginTop: 60 }}>
             <Icon name="location-off" size={48} color="#E2E8F0" />
             <Text style={{ color: '#94A3B8', marginTop: 12, fontSize: 15 }}>No cities found</Text>
           </View>
+        )}
+        {filteredCities.length > showCount && (
+          <TouchableOpacity
+            style={{ backgroundColor: '#F8FAFC', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0', marginTop: 8 }}
+            onPress={() => setShowCount(prev => prev + 20)}
+          >
+            <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More ({filteredCities.length - showCount} remaining)</Text>
+          </TouchableOpacity>
         )}
         <View style={{ height: 80 }} />
       </ScrollView>

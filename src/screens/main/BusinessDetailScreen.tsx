@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, Linking, ActivityIndicator, TextInput, Alert, Share, RefreshControl, Modal, FlatList, Dimensions, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MapView, { Marker } from 'react-native-maps';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
@@ -115,7 +116,8 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
 
   const handleShare = async () => {
     const name = business.title || business.name || 'this business';
-    try { await Share.share({ message: `Check out ${name} on NAAMPATA!\nhttps://naampata.com/business/${business.slug || business.id}` }); } catch (e) {}
+    const shareUrl = `https://naampata.com/business/${business.slug || business.id}`;
+    try { await Share.share({ message: `Check out ${name} on NAAMPATA!\n${shareUrl}`, url: shareUrl }); } catch (e) {}
   };
 
   const handleWhatsApp = () => { const phone = business.whatsapp || business.phone; if (phone) Linking.openURL(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`); };
@@ -200,6 +202,22 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             <Text style={{ color: '#92400E', fontWeight: '600', fontSize: 13 }}>Pending Approval — This listing is under review.</Text>
           </View>
         )}
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', gap: 6 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+            <Text style={{ color: '#FF7A30', fontWeight: '600', fontSize: 12 }}>Home</Text>
+          </TouchableOpacity>
+          <Icon name="chevron-right" size={14} color="#CBD5E1" />
+          {categoryName ? (
+            <>
+              <TouchableOpacity onPress={() => navigation.navigate('Search', { category: business.category?.slug || categoryName })}>
+                <Text style={{ color: '#FF7A30', fontWeight: '600', fontSize: 12 }}>{categoryName}</Text>
+              </TouchableOpacity>
+              <Icon name="chevron-right" size={14} color="#CBD5E1" />
+            </>
+          ) : null}
+          <Text style={{ color: '#94A3B8', fontWeight: '600', fontSize: 12 }} numberOfLines={1}>{businessName}</Text>
+        </View>
 
         <View style={{ height: 260, backgroundColor: '#E2E8F0' }}>
           <Image source={{ uri: coverImage }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
@@ -388,10 +406,22 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               </View>
 
               {lat && lng && (
-                <TouchableOpacity style={s.mapBtn} onPress={() => requireAuth(() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`))}>
-                  <Icon name="map" size={20} color="#FFF" />
-                  <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 15, marginLeft: 8 }}>Open in Google Maps</Text>
-                </TouchableOpacity>
+                <>
+                  <View style={{ height: 180, borderRadius: 14, overflow: 'hidden', marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                    <MapView
+                      style={{ flex: 1 }}
+                      initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.01, longitudeDelta: 0.01 }}
+                      scrollEnabled={false}
+                      zoomEnabled={false}
+                    >
+                      <Marker coordinate={{ latitude: lat, longitude: lng }} title={businessName} />
+                    </MapView>
+                  </View>
+                  <TouchableOpacity style={s.mapBtn} onPress={() => requireAuth(() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`))}>
+                    <Icon name="directions" size={20} color="#FFF" />
+                    <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 15, marginLeft: 8 }}>Get Directions</Text>
+                  </TouchableOpacity>
+                </>
               )}
 
               {Object.keys(socialLinks).length > 0 && (
@@ -407,6 +437,33 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                       );
                     })}
                   </View>
+                </>
+              )}
+
+              {business.vendor && (
+                <>
+                  <Text style={s.sectionTitle}>Business Owner</Text>
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 24, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                    onPress={() => {
+                      if (business.vendor?.id) {
+                        navigation.navigate('VendorProfile', { vendorId: business.vendor.id });
+                      }
+                    }}
+                  >
+                    <View style={{ width: 48, height: 48, backgroundColor: '#F1F5F9', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+                      {business.vendor?.user?.avatarUrl ? (
+                        <Image source={{ uri: business.vendor.user.avatarUrl }} style={{ width: 48, height: 48, borderRadius: 24 }} />
+                      ) : (
+                        <Icon name="person" size={24} color="#94A3B8" />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: '700', color: '#112D4E', fontSize: 15 }}>{business.vendor?.businessName || business.vendor?.user?.fullName || 'Business Owner'}</Text>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>View Profile →</Text>
+                    </View>
+                    <Icon name="chevron-right" size={20} color="#CBD5E1" />
+                  </TouchableOpacity>
                 </>
               )}
             </>

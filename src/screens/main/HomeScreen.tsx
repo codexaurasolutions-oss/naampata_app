@@ -18,14 +18,16 @@ export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [featuredPage, setFeaturedPage] = useState(1);
+  const [allFeatured, setAllFeatured] = useState<any[]>([]);
 
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories', 'popular'],
     queryFn: () => api.categories.getPopular(8),
   });
   const { data: featuredData, isLoading: loadingBusinesses } = useQuery({
-    queryKey: ['businesses', 'featured'],
-    queryFn: () => api.listings.getFeatured(1, 12),
+    queryKey: ['businesses', 'featured', featuredPage],
+    queryFn: () => api.listings.getFeatured(featuredPage, 6),
   });
   const { data: citiesData } = useQuery({
     queryKey: ['cities', 'popular'],
@@ -39,7 +41,11 @@ export default function HomeScreen({ navigation }: any) {
   const { data: homeCitiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
 
   const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
-  const featuredBusinesses = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
+  const newFeatured = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
+  if (featuredPage === 1 && newFeatured.length > 0 && allFeatured.length === 0) {
+    setAllFeatured(newFeatured);
+  }
+  const featuredBusinesses = featuredPage === 1 ? allFeatured : allFeatured;
   const topCities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
   const latestOffers = Array.isArray(offersData) ? offersData : (offersData?.data || offersData?.offers || []);
   const countries = Array.isArray(countriesData) ? countriesData : (countriesData?.data || []);
@@ -256,6 +262,18 @@ export default function HomeScreen({ navigation }: any) {
                 </FadeInView>
               );
             })
+          )}
+          {newFeatured.length >= 6 && !loadingBusinesses && (
+            <TouchableOpacity
+              style={{ backgroundColor: '#F8FAFC', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0', marginTop: 8 }}
+              onPress={() => {
+                const nextPage = featuredPage + 1;
+                setFeaturedPage(nextPage);
+                if (newFeatured.length > 0) setAllFeatured(prev => [...prev, ...newFeatured]);
+              }}
+            >
+              <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More</Text>
+            </TouchableOpacity>
           )}
         </View>
 

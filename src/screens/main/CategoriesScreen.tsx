@@ -6,12 +6,14 @@ import { api } from '../../services/api';
 
 export default function CategoriesScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCount, setShowCount] = useState(20);
   const { data, isLoading } = useQuery({ queryKey: ['categories'], queryFn: () => api.categories.getAll() });
 
-  const categories = data?.data || data?.categories || (Array.isArray(data) ? data : []);
+  const allCategories = data?.data || data?.categories || (Array.isArray(data) ? data : []);
   const filtered = searchQuery.trim()
-    ? categories.filter((cat: any) => (cat.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
-    : categories;
+    ? allCategories.filter((cat: any) => (cat.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
+    : allCategories;
+  const visibleCategories = filtered.slice(0, showCount);
 
   return (
     <View style={s.container}>
@@ -48,7 +50,7 @@ export default function CategoriesScreen({ navigation }: any) {
           <ActivityIndicator color="#FF7A30" style={{ marginVertical: 40 }} />
         ) : (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, justifyContent: 'space-between' }}>
-            {filtered.map((cat: any) => (
+            {visibleCategories.map((cat: any) => (
               <TouchableOpacity
                 key={cat.id}
                 style={s.categoryCard}
@@ -56,7 +58,17 @@ export default function CategoriesScreen({ navigation }: any) {
               >
                 <View style={s.categoryIconWrap}>
                   <Icon name={cat.icon || 'category'} size={28} color="#3B82F6" />
-                </View>
+          </View>
+          {filtered.length > showCount && (
+            <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+              <TouchableOpacity
+                style={{ backgroundColor: '#F8FAFC', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}
+                onPress={() => setShowCount(prev => prev + 20)}
+              >
+                <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More ({filtered.length - showCount} remaining)</Text>
+              </TouchableOpacity>
+            </View>
+          )}
                 <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
                 {cat.description ? (
                   <Text style={s.categoryDesc} numberOfLines={2}>{cat.description}</Text>
