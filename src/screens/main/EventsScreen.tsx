@@ -13,7 +13,7 @@ export default function EventsScreen({ navigation }: any) {
     queryFn: () => api.events.searchPublic({ limit: 20 }),
   });
 
-  const events = eventsData || [];
+  const events = eventsData?.data || eventsData?.events || (Array.isArray(eventsData) ? eventsData : []);
 
   const filteredEvents = selectedCategory === 'all'
     ? events

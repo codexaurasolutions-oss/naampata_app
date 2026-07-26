@@ -27,8 +27,8 @@ export default function SearchResultsScreen({ route, navigation }: any) {
   const { data: categoriesData } = useQuery({ queryKey: ['categories'], queryFn: () => api.categories.getAll() });
   const { data: citiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
 
-  const categories = categoriesData || [];
-  const cities = citiesData || [];
+  const categories = categoriesData?.data || categoriesData?.categories || (Array.isArray(categoriesData) ? categoriesData : []);
+  const cities = citiesData?.data || citiesData?.cities || (Array.isArray(citiesData) ? citiesData : []);
 
   const { data: searchData, isLoading } = useQuery({
     queryKey: ['search', searchQuery, selectedCategory, selectedCity, openNow, topRated, sortBy],
@@ -47,7 +47,7 @@ export default function SearchResultsScreen({ route, navigation }: any) {
     },
   });
 
-  const results = searchData?.businesses || searchData || [];
+  const results = searchData?.data || searchData?.businesses || (Array.isArray(searchData) ? searchData : []);
   const totalCount = searchData?.meta?.total || results.length;
   const activeFiltersCount = [selectedCategory, selectedCity, openNow, topRated].filter(Boolean).length + (sortBy !== 'recommended' ? 1 : 0);
 

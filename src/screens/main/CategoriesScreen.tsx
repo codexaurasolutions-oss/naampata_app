@@ -10,7 +10,7 @@ export default function CategoriesScreen({ navigation }: any) {
     queryFn: () => api.categories.getAll() 
   });
   
-  const categories = data || [];
+  const categories = data?.data || data?.categories || (Array.isArray(data) ? data : []);
 
   return (
     <View className="flex-1 bg-[#FDFCFB]">

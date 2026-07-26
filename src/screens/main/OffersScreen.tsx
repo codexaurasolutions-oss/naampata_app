@@ -25,19 +25,19 @@ export default function OffersScreen({ navigation }: any) {
   });
 
   const { data: citiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
-  const cities = citiesData || [];
+  const cities = citiesData?.data || citiesData?.cities || (Array.isArray(citiesData) ? citiesData : []);
 
   const isLoading = loadingDeals || loadingEvents;
 
   let items: any[] = [];
   if (activeTab === 'all') {
-    const deals = (dealsData || []).map((d: any) => ({ ...d, _type: 'deal' }));
-    const events = (eventsData || []).map((e: any) => ({ ...e, _type: 'event' }));
+    const deals = (dealsData?.data || dealsData?.deals || (Array.isArray(dealsData) ? dealsData : [])).map((d: any) => ({ ...d, _type: 'deal' }));
+    const events = (eventsData?.data || eventsData?.events || (Array.isArray(eventsData) ? eventsData : [])).map((e: any) => ({ ...e, _type: 'event' }));
     items = [...deals, ...events].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   } else if (activeTab === 'deals') {
-    items = (dealsData || []).map((d: any) => ({ ...d, _type: 'deal' }));
+    items = (dealsData?.data || dealsData?.deals || (Array.isArray(dealsData) ? dealsData : [])).map((d: any) => ({ ...d, _type: 'deal' }));
   } else {
-    items = (eventsData || []).map((e: any) => ({ ...e, _type: 'event' }));
+    items = (eventsData?.data || eventsData?.events || (Array.isArray(eventsData) ? eventsData : [])).map((e: any) => ({ ...e, _type: 'event' }));
   }
 
   if (selectedCity) {

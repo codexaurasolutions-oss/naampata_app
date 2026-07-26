@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, ActivityIndicator, Dimensions, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
@@ -26,30 +26,30 @@ export default function HomeScreen({ navigation }: any) {
     queryFn: () => api.listings.getFeatured(1, 12),
   });
 
-  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData || []);
-  const featuredBusinesses = featuredData || [];
+  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || (Array.isArray(categoriesData) ? categoriesData : []));
+  const featuredBusinesses = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
 
   return (
-    <View className="flex-1 bg-[#FDFCFB]">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="pt-20 pb-12 px-4 items-center">
+    <View style={s.container}>
+      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
+        <View style={s.headerSection}>
           <FadeInView delay={0} direction="up">
-            <Text className="text-4xl font-black text-[#112D4E] text-center mb-4 leading-tight">
+            <Text style={s.heroTitle}>
               Discover Local Businesses{'\n'}
-              <Text className="text-[#FF7A30]">Instantly</Text>
+              <Text style={s.heroAccent}>Instantly</Text>
             </Text>
-            <Text className="text-base text-slate-500 text-center mb-8 font-medium px-4">
+            <Text style={s.heroSubtitle}>
               Search, compare & contact the best services near you — fast and reliable.
             </Text>
           </FadeInView>
 
           <FadeInView delay={150} direction="up" style={{ width: '100%' }}>
-            <View className="w-full bg-white rounded-3xl border border-gray-100 shadow-sm mb-8 overflow-hidden">
-              <View className="flex-row items-center px-4 py-3 border-b border-gray-50">
+            <View style={s.searchBox}>
+              <View style={s.searchInputRow}>
                 <Icon name="search" size={20} color="#CBD5E1" />
                 <TextInput
                   placeholder="Search businesses..."
-                  className="flex-1 ml-3 h-10 text-slate-900 font-medium"
+                  style={s.searchInput}
                   placeholderTextColor="#CBD5E1"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -58,111 +58,111 @@ export default function HomeScreen({ navigation }: any) {
                 />
               </View>
               <TouchableOpacity
-                className="bg-[#FF7A30] py-4 items-center justify-center flex-row"
+                style={s.searchButton}
                 onPress={() => navigation.navigate('Search', { initialQuery: searchQuery })}
               >
                 <Icon name="search" size={20} color="#FFF" />
-                <Text className="text-white font-black text-lg ml-2">Search</Text>
+                <Text style={s.searchButtonText}>Search</Text>
               </TouchableOpacity>
             </View>
           </FadeInView>
 
-          <View className="w-full mb-8">
+          <View style={{ width: '100%', marginBottom: 32 }}>
             <FadeInView delay={250} direction="up">
-              <TouchableOpacity className="bg-white rounded-3xl border border-gray-50 p-6 flex-row items-center mb-4 shadow-sm" onPress={() => navigation.navigate('Offers')}>
-                <View className="w-16 h-16 rounded-2xl bg-orange-50 items-center justify-center">
+              <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('Offers')}>
+                <View style={[s.featureIcon, { backgroundColor: '#FFF7ED' }]}>
                   <Icon name="local-offer" size={32} color="#F97316" />
                 </View>
-                <View className="ml-4 flex-1">
-                  <Text className="font-black text-[#112D4E] text-xl mb-1">Hot Local Deals</Text>
-                  <Text className="text-slate-400 font-medium">Best deals & events near you</Text>
+                <View style={s.featureTextWrap}>
+                  <Text style={s.featureTitle}>Hot Local Deals</Text>
+                  <Text style={s.featureSubtitle}>Best deals & events near you</Text>
                 </View>
               </TouchableOpacity>
             </FadeInView>
             <FadeInView delay={350} direction="up">
-              <TouchableOpacity className="bg-white rounded-3xl border border-gray-50 p-6 flex-row items-center mb-4 shadow-sm" onPress={() => navigation.navigate('Events')}>
-                <View className="w-16 h-16 rounded-2xl bg-purple-50 items-center justify-center">
+              <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('Events')}>
+                <View style={[s.featureIcon, { backgroundColor: '#FAF5FF' }]}>
                   <Icon name="event" size={32} color="#A855F7" />
                 </View>
-                <View className="ml-4 flex-1">
-                  <Text className="font-black text-[#112D4E] text-xl mb-1">Local Events</Text>
-                  <Text className="text-slate-400 font-medium">Discover what's happening near you</Text>
+                <View style={s.featureTextWrap}>
+                  <Text style={s.featureTitle}>Local Events</Text>
+                  <Text style={s.featureSubtitle}>Discover what's happening near you</Text>
                 </View>
               </TouchableOpacity>
             </FadeInView>
             <FadeInView delay={450} direction="up">
-              <TouchableOpacity className="bg-white rounded-3xl border border-gray-50 p-6 flex-row items-center shadow-sm" onPress={() => navigation.navigate('ExpertQuote')}>
-                <View className="w-16 h-16 rounded-2xl bg-blue-50 items-center justify-center">
+              <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('ExpertQuote')}>
+                <View style={[s.featureIcon, { backgroundColor: '#EFF6FF' }]}>
                   <Icon name="campaign" size={32} color="#3B82F6" />
                 </View>
-                <View className="ml-4 flex-1">
-                  <Text className="font-black text-[#112D4E] text-xl mb-1">Get Expert Quotes</Text>
-                  <Text className="text-slate-400 font-medium">Post your requirement easily</Text>
+                <View style={s.featureTextWrap}>
+                  <Text style={s.featureTitle}>Get Expert Quotes</Text>
+                  <Text style={s.featureSubtitle}>Post your requirement easily</Text>
                 </View>
               </TouchableOpacity>
             </FadeInView>
           </View>
 
           <FadeInView delay={550} direction="up" style={{ width: '100%' }}>
-            <View className="w-full bg-white/50 rounded-3xl border border-gray-100 p-4 shadow-sm">
-              <View className="flex-row items-center mb-4">
-                <View className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm border border-gray-50">
+            <View style={s.trustBox}>
+              <View style={s.trustRow}>
+                <View style={s.trustIconWrap}>
                   <Icon name="verified-user" size={20} color="#F97316" />
                 </View>
-                <View className="ml-3">
-                  <Text className="font-bold text-[#112D4E] text-xs uppercase tracking-wider">Local Businesses</Text>
-                  <Text className="text-slate-400 text-[10px] font-medium">Active and reliable listings</Text>
+                <View style={s.trustTextWrap}>
+                  <Text style={s.trustTitle}>LOCAL BUSINESSES</Text>
+                  <Text style={s.trustSubtitle}>Active and reliable listings</Text>
                 </View>
               </View>
-              <View className="flex-row items-center mb-4">
-                <View className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm border border-gray-50">
+              <View style={s.trustRow}>
+                <View style={s.trustIconWrap}>
                   <Icon name="search" size={20} color="#22C55E" />
                 </View>
-                <View className="ml-3">
-                  <Text className="font-bold text-[#112D4E] text-xs uppercase tracking-wider">Fast & Easy Search</Text>
-                  <Text className="text-slate-400 text-[10px] font-medium">Find what you need instantly</Text>
+                <View style={s.trustTextWrap}>
+                  <Text style={s.trustTitle}>FAST & EASY SEARCH</Text>
+                  <Text style={s.trustSubtitle}>Find what you need instantly</Text>
                 </View>
               </View>
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm border border-gray-50">
+              <View style={[s.trustRow, { marginBottom: 0 }]}>
+                <View style={s.trustIconWrap}>
                   <Icon name="headset-mic" size={20} color="#3B82F6" />
                 </View>
-                <View className="ml-3">
-                  <Text className="font-bold text-[#112D4E] text-xs uppercase tracking-wider">Local Support</Text>
-                  <Text className="text-slate-400 text-[10px] font-medium">We're here to help</Text>
+                <View style={s.trustTextWrap}>
+                  <Text style={s.trustTitle}>LOCAL SUPPORT</Text>
+                  <Text style={s.trustSubtitle}>We're here to help</Text>
                 </View>
               </View>
             </View>
           </FadeInView>
         </View>
 
-        <View className="bg-white py-12 px-4">
+        <View style={s.sectionWhite}>
           <FadeInView delay={100} direction="up">
-            <View className="items-center mb-8">
-              <Text className="text-2xl font-bold text-[#202124] mb-2">Popular Categories</Text>
-              <View className="w-12 h-1 bg-[#FF7A30] rounded-full" />
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Popular Categories</Text>
+              <View style={s.sectionDivider} />
             </View>
           </FadeInView>
 
           {loadingCategories ? (
-            <ActivityIndicator color="#FF7A30" />
+            <ActivityIndicator color="#FF7A30" size="large" style={{ marginVertical: 20 }} />
           ) : (
-            <View className="flex-row flex-wrap justify-between">
+            <View style={s.categoriesGrid}>
               {categories.slice(0, 8).map((cat: any, idx: number) => {
                 const slug = (cat.slug || cat.name || '').toLowerCase().replace(/[^a-z]/g, '');
                 const iconName = Object.entries(CATEGORY_ICONS).find(([key]) => slug.includes(key))?.[1] || CATEGORY_ICONS.default;
                 return (
                   <FadeInView key={cat.id || idx} delay={200 + idx * 60} direction="up">
                     <TouchableOpacity
-                      className="w-[23%] bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-4 items-center"
+                      style={s.categoryItem}
                       onPress={() => navigation.navigate('Search', { category: cat.slug || cat.name })}
                     >
-                      <View className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 items-center justify-center mb-2">
+                      <View style={s.categoryIconWrap}>
                         <Icon name={iconName} size={22} color="#FF7A30" />
                       </View>
-                      <Text className="font-bold text-[10px] text-slate-700 text-center" numberOfLines={2}>{cat.name}</Text>
+                      <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
                       {cat.businessCount > 0 && (
-                        <Text className="text-slate-400 text-[9px] mt-1">{cat.businessCount} listing{cat.businessCount !== 1 ? 's' : ''}</Text>
+                        <Text style={s.categoryCount}>{cat.businessCount} listing{cat.businessCount !== 1 ? 's' : ''}</Text>
                       )}
                     </TouchableOpacity>
                   </FadeInView>
@@ -172,39 +172,44 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
 
-        <View className="bg-white py-12 px-4">
+        <View style={s.sectionWhite}>
           <FadeInView delay={100} direction="up">
-            <View className="items-center mb-8">
-              <Text className="text-2xl font-bold text-[#202124] mb-2">Featured Businesses</Text>
-              <View className="w-12 h-1 bg-[#FF7A30] rounded-full" />
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Featured Businesses</Text>
+              <View style={s.sectionDivider} />
             </View>
           </FadeInView>
 
           {loadingBusinesses ? (
-            <ActivityIndicator color="#FF7A30" />
+            <ActivityIndicator color="#FF7A30" size="large" style={{ marginVertical: 20 }} />
+          ) : featuredBusinesses.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 30 }}>
+              <Icon name="business-center" size={48} color="#E2E8F0" />
+              <Text style={{ color: '#94A3B8', marginTop: 12, fontSize: 14 }}>No featured businesses yet</Text>
+            </View>
           ) : (
             featuredBusinesses.map((biz: any, index: number) => {
               const img = biz.coverImageUrl || biz.coverImage || biz.logoUrl || FALLBACK_IMG;
               return (
                 <FadeInView key={biz.id || index} delay={200 + index * 80} direction="up">
                   <TouchableOpacity
-                    className="bg-white rounded-3xl p-3 mb-4 shadow-sm border border-slate-100 flex-row items-center"
+                    style={s.businessCard}
                     onPress={() => navigation.navigate('BusinessDetail', { id: biz.id, slug: biz.slug })}
                   >
                     <Image
                       source={{ uri: img }}
-                      className="w-24 h-24 rounded-2xl bg-slate-200"
+                      style={s.businessImage}
                     />
-                    <View className="flex-1 ml-4 justify-center">
-                      <Text className="text-slate-400 text-xs font-medium mb-1">{biz.category?.name || ''}</Text>
-                      <Text className="text-lg font-bold text-[#112D4E] mb-1" numberOfLines={1}>{biz.title || biz.name || 'Business'}</Text>
-                      <View className="flex-row items-center mb-2">
+                    <View style={s.businessInfo}>
+                      <Text style={s.businessCategory}>{biz.category?.name || ''}</Text>
+                      <Text style={s.businessName} numberOfLines={1}>{biz.title || biz.name || 'Business'}</Text>
+                      <View style={s.ratingRow}>
                         <Icon name="star" size={16} color="#F59E0B" />
-                        <Text className="text-slate-900 font-bold text-xs ml-1">{Number(biz.averageRating || biz.rating || 0).toFixed(1)}</Text>
+                        <Text style={s.ratingText}>{Number(biz.averageRating || biz.rating || 0).toFixed(1)}</Text>
                       </View>
-                      <View className="flex-row items-center">
+                      <View style={s.locationRow}>
                         <Icon name="location-on" size={14} color="#94A3B8" />
-                        <Text className="text-slate-500 text-xs ml-1" numberOfLines={1}>
+                        <Text style={s.locationText} numberOfLines={1}>
                           {biz.city || biz.address?.city || ''}
                         </Text>
                       </View>
@@ -216,38 +221,38 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
 
-        <View className="bg-white py-12 px-4 mb-10">
+        <View style={[s.sectionWhite, { paddingBottom: 40 }]}>
           <FadeInView delay={100} direction="up">
-            <View className="items-center mb-8">
-              <Text className="text-2xl font-bold text-[#202124] mb-2">How It Works</Text>
-              <View className="w-12 h-1 bg-[#FF7A30] rounded-full" />
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>How It Works</Text>
+              <View style={s.sectionDivider} />
             </View>
           </FadeInView>
           <FadeInView delay={200} direction="up">
-            <View className="items-center mb-8">
-              <View className="w-16 h-16 bg-gray-50 rounded-full items-center justify-center mb-4">
+            <View style={s.howItem}>
+              <View style={s.howIconWrap}>
                 <Icon name="search" size={24} color="#FF7A30" />
               </View>
-              <Text className="text-xl font-bold text-[#202124] mb-2">Search & Find</Text>
-              <Text className="text-[#70757a] text-sm text-center">Choose the service you need from our top categories.</Text>
+              <Text style={s.howTitle}>Search & Find</Text>
+              <Text style={s.howSubtitle}>Choose the service you need from our top categories.</Text>
             </View>
           </FadeInView>
           <FadeInView delay={300} direction="up">
-            <View className="items-center mb-8">
-              <View className="w-16 h-16 bg-gray-50 rounded-full items-center justify-center mb-4">
+            <View style={s.howItem}>
+              <View style={s.howIconWrap}>
                 <Icon name="favorite" size={24} color="#FF7A30" />
               </View>
-              <Text className="text-xl font-bold text-[#202124] mb-2">Compare & Review</Text>
-              <Text className="text-[#70757a] text-sm text-center">Read reviews & select the best local providers.</Text>
+              <Text style={s.howTitle}>Compare & Review</Text>
+              <Text style={s.howSubtitle}>Read reviews & select the best local providers.</Text>
             </View>
           </FadeInView>
           <FadeInView delay={400} direction="up">
-            <View className="items-center mb-8">
-              <View className="w-16 h-16 bg-gray-50 rounded-full items-center justify-center mb-4">
+            <View style={s.howItem}>
+              <View style={s.howIconWrap}>
                 <Icon name="phone" size={24} color="#FF7A30" />
               </View>
-              <Text className="text-xl font-bold text-[#202124] mb-2">Contact & Connect</Text>
-              <Text className="text-[#70757a] text-sm text-center">Reach out directly to your chosen business in seconds.</Text>
+              <Text style={s.howTitle}>Contact & Connect</Text>
+              <Text style={s.howSubtitle}>Reach out directly to your chosen business in seconds.</Text>
             </View>
           </FadeInView>
         </View>
@@ -255,3 +260,50 @@ export default function HomeScreen({ navigation }: any) {
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FDFCFB' },
+  scroll: { flex: 1 },
+  headerSection: { paddingTop: 80, paddingBottom: 48, paddingHorizontal: 16, alignItems: 'center' },
+  heroTitle: { fontSize: 34, fontWeight: '900', color: '#112D4E', textAlign: 'center', marginBottom: 16, lineHeight: 42 },
+  heroAccent: { color: '#FF7A30' },
+  heroSubtitle: { fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 32, fontWeight: '500', paddingHorizontal: 16 },
+  searchBox: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 32, overflow: 'hidden' },
+  searchInputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F9FAFB' },
+  searchInput: { flex: 1, marginLeft: 12, height: 40, color: '#1E293B', fontWeight: '500', fontSize: 15 },
+  searchButton: { backgroundColor: '#FF7A30', paddingVertical: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+  searchButtonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 17, marginLeft: 8 },
+  featureCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24, flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#F9FAFB' },
+  featureIcon: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  featureTextWrap: { marginLeft: 16, flex: 1 },
+  featureTitle: { fontWeight: '900', color: '#112D4E', fontSize: 20, marginBottom: 4 },
+  featureSubtitle: { color: '#94A3B8', fontWeight: '500', fontSize: 14 },
+  trustBox: { width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 24, borderWidth: 1, borderColor: '#F3F4F6', padding: 16 },
+  trustRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  trustIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F9FAFB' },
+  trustTextWrap: { marginLeft: 12 },
+  trustTitle: { fontWeight: '700', color: '#112D4E', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
+  trustSubtitle: { color: '#94A3B8', fontSize: 10, fontWeight: '500', marginTop: 2 },
+  sectionWhite: { backgroundColor: '#FFFFFF', paddingVertical: 48, paddingHorizontal: 16 },
+  sectionHeader: { alignItems: 'center', marginBottom: 32 },
+  sectionTitle: { fontSize: 22, fontWeight: '700', color: '#202124', marginBottom: 8 },
+  sectionDivider: { width: 48, height: 4, backgroundColor: '#FF7A30', borderRadius: 2 },
+  categoriesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  categoryItem: { width: (width - 64) / 4, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 20, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 16, alignItems: 'center' },
+  categoryIconWrap: { width: 48, height: 48, backgroundColor: '#FFFFFF', borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 8, borderWidth: 1, borderColor: '#F1F5F9' },
+  categoryName: { fontWeight: '700', fontSize: 11, color: '#334155', textAlign: 'center' },
+  categoryCount: { color: '#94A3B8', fontSize: 9, marginTop: 4 },
+  businessCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
+  businessImage: { width: 96, height: 96, borderRadius: 20, backgroundColor: '#E2E8F0' },
+  businessInfo: { flex: 1, marginLeft: 16, justifyContent: 'center' },
+  businessCategory: { color: '#94A3B8', fontSize: 12, fontWeight: '500', marginBottom: 4 },
+  businessName: { fontSize: 17, fontWeight: '700', color: '#112D4E', marginBottom: 6 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  ratingText: { color: '#1E293B', fontWeight: '700', fontSize: 12, marginLeft: 4 },
+  locationRow: { flexDirection: 'row', alignItems: 'center' },
+  locationText: { color: '#64748B', fontSize: 12, marginLeft: 4 },
+  howItem: { alignItems: 'center', marginBottom: 32 },
+  howIconWrap: { width: 64, height: 64, backgroundColor: '#F9FAFB', borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  howTitle: { fontSize: 18, fontWeight: '700', color: '#202124', marginBottom: 8 },
+  howSubtitle: { color: '#70757A', fontSize: 14, textAlign: 'center', paddingHorizontal: 32 },
+});

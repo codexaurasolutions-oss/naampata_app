@@ -12,7 +12,7 @@ export default function CitiesScreen({ navigation }: any) {
     queryFn: () => api.cities.getAll()
   });
   
-  const cities = data || [];
+  const cities = data?.data || data?.cities || (Array.isArray(data) ? data : []);
   
   const filteredCities = cities.filter((c: any) => 
     c.name.toLowerCase().includes(search.toLowerCase())

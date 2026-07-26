@@ -108,10 +108,10 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   });
 
   const business = data || {};
-  const reviews = reviewsData || [];
-  const qa = qaData || [];
-  const offers = offersData || [];
-  const similar = similarData || [];
+  const reviews = reviewsData?.data || reviewsData?.reviews || (Array.isArray(reviewsData) ? reviewsData : []);
+  const qa = qaData?.data || qaData?.questions || (Array.isArray(qaData) ? qaData : []);
+  const offers = offersData?.data || offersData?.offers || (Array.isArray(offersData) ? offersData : []);
+  const similar = similarData?.data || similarData?.businesses || (Array.isArray(similarData) ? similarData : []);
   const isFollowing = followData?.isFollowing || false;
   const followerCount = followerCountData?.count || business.followersCount || 0;
 

@@ -28,7 +28,7 @@ export default function SearchScreen({ route, navigation }: any) {
     queryKey: ['categories', 'popular'], 
     queryFn: () => api.categories.getPopular() 
   });
-  const popularCategories = categoriesData || [];
+  const popularCategories = categoriesData?.data || categoriesData?.categories || (Array.isArray(categoriesData) ? categoriesData : []);
 
   const handleSearchSubmit = (query: string = searchQuery, categorySlug: string = '') => {
     if (!query && !categorySlug) return;
