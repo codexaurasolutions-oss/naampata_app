@@ -1,15 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function SplashScreen({ navigation }: any) {
-  const { checkSession } = useAuthStore();
-  const spinValue = new Animated.Value(0);
-  const fadeValue = new Animated.Value(0);
+  const { checkSession, isAuthenticated } = useAuthStore();
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const fadeValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Start animations
     Animated.parallel([
       Animated.timing(fadeValue, {
         toValue: 1,
@@ -26,17 +25,20 @@ export default function SplashScreen({ navigation }: any) {
       )
     ]).start();
 
-    // Verify session and transition
     const initApp = async () => {
       await checkSession();
-      // Minimum display time for branding
       setTimeout(() => {
-        navigation.replace('Main');
+        const state = useAuthStore.getState();
+        if (state.isAuthenticated && state.token) {
+          navigation.replace('Main');
+        } else {
+          navigation.replace('Main');
+        }
       }, 1500);
     };
 
     initApp();
-  }, [checkSession, fadeValue, navigation, spinValue]);
+  }, []);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -44,25 +46,23 @@ export default function SplashScreen({ navigation }: any) {
   });
 
   return (
-    <View className="flex-1 bg-white items-center justify-center relative overflow-hidden">
-      {/* Background Decorators */}
-      <View className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-slate-100 rounded-full opacity-50" />
-      <View className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#FF7A30] rounded-full opacity-10" />
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', top: -80, left: -80, width: 240, height: 240, backgroundColor: '#F1F5F9', borderRadius: 999, opacity: 0.5 }} />
+      <View style={{ position: 'absolute', bottom: -40, right: -40, width: 160, height: 160, backgroundColor: '#FF7A30', borderRadius: 999, opacity: 0.1 }} />
 
-      <Animated.View style={{ opacity: fadeValue }} className="items-center z-10">
-        <View className="w-24 h-24 bg-white rounded-3xl items-center justify-center shadow-xl mb-6 relative border border-slate-100">
+      <Animated.View style={{ opacity: fadeValue, alignItems: 'center', zIndex: 10 }}>
+        <View style={{ width: 96, height: 96, backgroundColor: '#FFFFFF', borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 24, position: 'relative', borderWidth: 1, borderColor: '#F1F5F9' }}>
           <Icon name="storefront" size={48} color="#FF7A30" />
-          <Animated.View 
-            style={{ transform: [{ rotate: spin }] }}
-            className="absolute inset-0 border-4 border-dashed border-slate-200 rounded-3xl"
+          <Animated.View
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 4, borderStyle: 'dashed', borderColor: '#E2E8F0', borderRadius: 24, transform: [{ rotate: spin }] }}
           />
         </View>
-        <Text className="text-4xl font-black text-[#112D4E] tracking-widest mb-2">NAAMPATA</Text>
-        <Text className="text-[#FF7A30] font-bold uppercase tracking-[0.2em] text-xs">Directory & Search</Text>
+        <Text style={{ fontSize: 36, fontWeight: '900', color: '#112D4E', letterSpacing: 4, marginBottom: 8 }}>NAAMPATA</Text>
+        <Text style={{ color: '#FF7A30', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 5, fontSize: 10 }}>Directory & Search</Text>
       </Animated.View>
 
-      <View className="absolute bottom-10 items-center w-full">
-        <Text className="text-slate-400 text-xs font-medium">Initializing Secure Environment...</Text>
+      <View style={{ position: 'absolute', bottom: 40, alignItems: 'center', width: '100%' }}>
+        <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '500' }}>Initializing Secure Environment...</Text>
       </View>
     </View>
   );

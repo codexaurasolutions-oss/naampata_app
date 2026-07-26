@@ -97,7 +97,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       newSocket.close();
     };
-  }, [isAuthenticated, user, token, baseUrl, socket]);
+  }, [isAuthenticated, user?.id, token]);
 
   const sendMessage = useCallback((conversationId: string, content: string) => {
     if (socket?.connected) {
