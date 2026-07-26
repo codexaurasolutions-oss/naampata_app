@@ -141,7 +141,7 @@ export const api = {
     markRead: (id: string) => api.patch<any>(`/leads/${id}/read`),
     create: (data: any) => api.post<any>('/leads', data),
     getNotes: (id: string) => api.get<any>(`/leads/${id}/notes`),
-    addNote: (id: string, content: string) => api.post<any>(`/leads/${id}/notes`, { content }),
+    addNote: (id: string, note: string) => api.post<any>(`/leads/${id}/notes`, { note }),
   },
 
   chat: {
@@ -283,8 +283,12 @@ export const api = {
   },
 
   location: {
-    autocomplete: (query: string) => api.get<any>(`/location/places/autocomplete?query=${encodeURIComponent(query)}`),
-    resolve: (placeId: string) => api.post<any>('/location/places/resolve', { placeId }),
+    autocomplete: (input: string, sessionToken: string = 'mobile', countryCode?: string) => {
+      const params = new URLSearchParams({ input, sessionToken });
+      if (countryCode) params.append('countryCode', countryCode);
+      return api.get<any>(`/location/places/autocomplete?${params.toString()}`);
+    },
+    resolve: (description: string, sessionToken: string = 'mobile') => api.post<any>('/location/places/resolve', { description, sessionToken }),
   },
 
   cloudinary: {

@@ -20,7 +20,7 @@ export default function SearchScreen({ route, navigation }: any) {
 
   useEffect(() => {
     if (debouncedQuery.length > 2) {
-      api.demand.logSearch({ query: debouncedQuery }).catch(() => {});
+      api.demand.logSearch({ keyword: debouncedQuery }).catch(() => {});
     }
   }, [debouncedQuery]);
 
