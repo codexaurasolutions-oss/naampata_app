@@ -24,7 +24,7 @@ export default function ChatScreen({ route, navigation }: any) {
 
   useEffect(() => {
     if (initialData) {
-      setMessages(initialData || []);
+      setMessages(initialData?.data || initialData || []);
     }
   }, [initialData]);
 
@@ -51,7 +51,7 @@ export default function ChatScreen({ route, navigation }: any) {
     return () => {
       if (isConnected) leaveConversation(conversationId);
     };
-  }, [isConnected, conversationId]);
+  }, [isConnected, conversationId, joinConversation, leaveConversation, markReadMutation, socket]);
 
   // Listen for new messages via socket
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function ChatScreen({ route, navigation }: any) {
       socket.off('new_message', handleNewMessage);
       socket.off('conversation_updated', handleConversationUpdated);
     };
-  }, [socket, conversationId]);
+  }, [socket, conversationId, queryClient]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function ChatScreen({ route, navigation }: any) {
       id: `temp_${Date.now()}`,
       content,
       senderId: user?.id,
-      sender: { id: user?.id, fullName: user?.fullName, avatarUrl: user?.avatarUrl },
+      sender: { id: user?.id, fullName: user?.fullName, avatar: user?.avatar },
       createdAt: new Date().toISOString(),
       isOptimistic: true,
     };

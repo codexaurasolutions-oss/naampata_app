@@ -19,6 +19,7 @@ export default function MainTabNavigator() {
         tabBarInactiveTintColor: '#94A3B8',
         tabBarStyle: { paddingBottom: 8, height: 60, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        // eslint-disable-next-line react/no-unstable-nested-components
         tabBarIcon: ({ color, size }) => {
           let iconName = 'home';
           if (route.name === 'Home') iconName = 'home';

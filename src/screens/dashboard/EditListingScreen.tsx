@@ -14,7 +14,7 @@ export default function EditListingScreen({ route, navigation }: any) {
     enabled: !!listingId,
   });
 
-  const listing = data || {};
+  const listing = React.useMemo(() => data?.data || {}, [data?.data]);
 
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
