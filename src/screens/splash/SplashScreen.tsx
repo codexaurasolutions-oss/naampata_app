@@ -23,11 +23,7 @@ export default function SplashScreen({ navigation }: any) {
     ]).start();
 
     const timer = setTimeout(() => {
-      if (isAuthenticated) {
-        navigation.replace('Main');
-      } else {
-        navigation.replace('Auth');
-      }
+      navigation.replace('Main');
     }, 2000);
 
     return () => clearTimeout(timer);

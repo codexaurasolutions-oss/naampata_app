@@ -44,8 +44,8 @@ export const googleLogin = async () => {
     }
     if (String(error.message || '').includes('DEVELOPER_ERROR') || String(error.code || '') === '10') {
       Alert.alert(
-        'Google Sign-In Unavailable',
-        'Google Sign-In is not configured for this app yet. Please use email and password to sign in.'
+        'Google Sign-In Not Available',
+        'Google login is not yet configured for this app build. Please use email and password to sign in.'
       );
       return null;
     }
