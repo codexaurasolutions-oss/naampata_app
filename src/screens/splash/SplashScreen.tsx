@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, Animated, Easing, Image } from 'react-native';
-import { useAuthStore } from '../../stores/authStore';
+import { View, Text, Animated } from 'react-native';
 
 export default function SplashScreen({ navigation }: any) {
-  const { isAuthenticated, isLoading } = useAuthStore();
   const fadeValue = new Animated.Value(0);
   const scaleValue = new Animated.Value(0.8);
 
@@ -27,7 +25,7 @@ export default function SplashScreen({ navigation }: any) {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated]);
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#112D4E', alignItems: 'center', justifyContent: 'center' }}>
@@ -36,11 +34,7 @@ export default function SplashScreen({ navigation }: any) {
 
       <Animated.View style={{ opacity: fadeValue, transform: [{ scale: scaleValue }], alignItems: 'center' }}>
         <View style={{ width: 120, height: 120, backgroundColor: '#FFFFFF', borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16, elevation: 12 }}>
-          <Image
-            source={{ uri: 'https://naampata.com/logo.png' }}
-            style={{ width: 80, height: 80 }}
-            resizeMode="contain"
-          />
+          <Text style={{ fontSize: 42, fontWeight: '900', color: '#112D4E' }}>N</Text>
         </View>
         <Text style={{ fontSize: 36, fontWeight: '900', color: '#FFFFFF', letterSpacing: 4, marginBottom: 8 }}>NAAMPATA</Text>
         <Text style={{ fontSize: 12, color: '#FF7A30', fontWeight: '700', letterSpacing: 6, textTransform: 'uppercase' }}>Directory & Search</Text>

@@ -1,11 +1,25 @@
 import React from 'react';
 import { Alert, Platform } from 'react-native';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { useAuthStore } from '../stores/authStore';
 
 const GOOGLE_WEB_CLIENT_ID = '726476736350-o9j27vqrl98bde2brjt9va0n7149600k.apps.googleusercontent.com';
 
+let GoogleSignin: any = null;
+let statusCodes: any = null;
+let googleSigninAvailable = false;
+
+try {
+  const gs = require('@react-native-google-signin/google-signin');
+  GoogleSignin = gs.GoogleSignin;
+  statusCodes = gs.statusCodes;
+  googleSigninAvailable = true;
+} catch (e) {
+  console.warn('[GoogleSignIn] Module not available:', e);
+  googleSigninAvailable = false;
+}
+
 export const configureGoogleSignIn = () => {
+  if (!googleSigninAvailable || !GoogleSignin) return;
   try {
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
@@ -19,6 +33,11 @@ export const configureGoogleSignIn = () => {
 };
 
 export const googleLogin = async () => {
+  if (!googleSigninAvailable || !GoogleSignin) {
+    Alert.alert('Google Sign-In Not Available', 'Please use email and password to sign in.');
+    return null;
+  }
+
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const userInfo = await GoogleSignin.signIn();
@@ -56,6 +75,7 @@ export const googleLogin = async () => {
 };
 
 export const googleLogout = async () => {
+  if (!googleSigninAvailable || !GoogleSignin) return;
   try {
     await GoogleSignin.revokeAccess();
     await GoogleSignin.signOut();

@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../stores/authStore';
-import { API_URL } from '../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SocketContextData {
   socket: Socket | null;
@@ -22,12 +20,17 @@ const SocketContext = createContext<SocketContextData>({
   leaveConversation: () => {},
 });
 
+let API_URL = 'https://local-business-listing-directory-production.up.railway.app/api/v1';
+try {
+  API_URL = require('../services/api').API_URL || API_URL;
+} catch (e) {}
+
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, token } = useAuthStore();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  const baseUrl = API_URL.replace('/api/v1', '');
+  const baseUrl = (API_URL || '').replace('/api/v1', '');
 
   useEffect(() => {
     if (!isAuthenticated || !user || !token) {
