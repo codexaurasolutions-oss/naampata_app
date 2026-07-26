@@ -18,6 +18,10 @@ import CitiesScreen from '../screens/main/CitiesScreen';
 import SearchResultsScreen from '../screens/main/SearchResultsScreen';
 import EventsScreen from '../screens/main/EventsScreen';
 import DeleteAccountScreen from '../screens/main/DeleteAccountScreen';
+import AboutScreen from '../screens/main/AboutScreen';
+import ContactScreen from '../screens/main/ContactScreen';
+import CategoryDetailScreen from '../screens/main/CategoryDetailScreen';
+import CityDetailScreen from '../screens/main/CityDetailScreen';
 
 const RootStack = createNativeStackNavigator();
 
@@ -36,6 +40,10 @@ export default function RootNavigator() {
         <RootStack.Screen name="SearchResults" component={SearchResultsScreen} />
         <RootStack.Screen name="Events" component={EventsScreen} />
         <RootStack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+        <RootStack.Screen name="About" component={AboutScreen} />
+        <RootStack.Screen name="Contact" component={ContactScreen} />
+        <RootStack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+        <RootStack.Screen name="CityDetail" component={CityDetailScreen} />
         <RootStack.Screen name="Auth" component={AuthStack} />
         <RootStack.Screen name="Dashboard" component={DashboardStack} />
         <RootStack.Screen name="Settings" component={SettingsScreen} />

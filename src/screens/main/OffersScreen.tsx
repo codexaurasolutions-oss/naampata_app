@@ -9,6 +9,8 @@ type TabType = 'all' | 'deals' | 'events';
 export default function OffersScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [showCityFilter, setShowCityFilter] = useState(false);
 
   const { data: dealsData, isLoading: loadingDeals, refetch: refetchDeals } = useQuery({
     queryKey: ['deals', 'public'],
@@ -22,6 +24,9 @@ export default function OffersScreen({ navigation }: any) {
     enabled: activeTab === 'all' || activeTab === 'events',
   });
 
+  const { data: citiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
+  const cities = citiesData?.data || [];
+
   const isLoading = loadingDeals || loadingEvents;
 
   let items: any[] = [];
@@ -33,6 +38,13 @@ export default function OffersScreen({ navigation }: any) {
     items = (dealsData?.data || []).map((d: any) => ({ ...d, _type: 'deal' }));
   } else {
     items = (eventsData?.data || []).map((e: any) => ({ ...e, _type: 'event' }));
+  }
+
+  if (selectedCity) {
+    items = items.filter((item: any) => {
+      const itemCity = item.city || item.business?.city || '';
+      return itemCity.toLowerCase() === selectedCity.toLowerCase();
+    });
   }
 
   const onRefresh = async () => {
@@ -49,10 +61,40 @@ export default function OffersScreen({ navigation }: any) {
 
   return (
     <View className="flex-1 bg-[#FDFCFB] pt-12 px-4">
-      <View className="mb-6">
-        <Text className="text-3xl font-bold text-[#112D4E] mb-2">Offers & Events</Text>
-        <Text className="text-slate-500 text-base">Discover the latest deals and happenings near you.</Text>
+      <View className="mb-4">
+        <View className="flex-row justify-between items-center">
+          <View>
+            <Text className="text-3xl font-bold text-[#112D4E] mb-2">Offers & Events</Text>
+            <Text className="text-slate-500 text-base">Discover the latest deals and happenings near you.</Text>
+          </View>
+          <TouchableOpacity
+            className={`w-10 h-10 rounded-full items-center justify-center border ${selectedCity ? 'bg-[#FF7A30] border-[#FF7A30]' : 'bg-white border-slate-200'}`}
+            onPress={() => setShowCityFilter(!showCityFilter)}
+          >
+            <Icon name="location-on" size={20} color={selectedCity ? '#FFF' : '#64748B'} />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {showCityFilter && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+          <TouchableOpacity
+            className={`px-4 py-2 rounded-full mr-2 border ${!selectedCity ? 'bg-[#FF7A30] border-[#FF7A30]' : 'bg-white border-slate-200'}`}
+            onPress={() => setSelectedCity('')}
+          >
+            <Text className={`font-bold text-sm ${!selectedCity ? 'text-white' : 'text-slate-600'}`}>All Cities</Text>
+          </TouchableOpacity>
+          {cities.map((city: any) => (
+            <TouchableOpacity
+              key={city.id}
+              className={`px-4 py-2 rounded-full mr-2 border ${selectedCity === city.name ? 'bg-[#FF7A30] border-[#FF7A30]' : 'bg-white border-slate-200'}`}
+              onPress={() => setSelectedCity(selectedCity === city.name ? '' : city.name)}
+            >
+              <Text className={`font-bold text-sm ${selectedCity === city.name ? 'text-white' : 'text-slate-600'}`}>{city.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <View className="flex-row bg-slate-100 p-1 rounded-2xl mb-6">
         {tabs.map((tab) => (
@@ -78,8 +120,8 @@ export default function OffersScreen({ navigation }: any) {
           items.map((item: any, index: number) => {
             const isEvent = item._type === 'event';
             const title = item.title || item.name || 'Untitled';
-            const businessName = item.business?.name || item.businessName || '';
-            const imageUrl = item.imageUrl || item.image || item.coverImage;
+            const businessName = item.business?.businessName || item.business?.name || item.businessName || '';
+            const imageUrl = item.imageUrl || item.bannerUrl || item.image || item.coverImage;
             const endDate = item.endDate || item.startDate || '';
             const badge = isEvent ? 'Event' : 'Deal';
             const badgeColor = isEvent ? 'bg-purple-500' : 'bg-[#FF7A30]';
@@ -90,7 +132,7 @@ export default function OffersScreen({ navigation }: any) {
                 className="bg-white rounded-3xl mb-5 shadow-sm border border-slate-100 overflow-hidden"
                 onPress={() => {
                   if (isEvent) {
-                    navigation.navigate('Events', { eventId: item.id });
+                    navigation.navigate('BusinessDetail', { id: item.businessId || item.business?.id });
                   } else {
                     navigation.navigate('BusinessDetail', { id: item.businessId || item.business?.id });
                   }
@@ -121,7 +163,7 @@ export default function OffersScreen({ navigation }: any) {
                       <View className="flex-row items-center">
                         <Icon name="schedule" size={16} color="#FF7A30" />
                         <Text className="text-[#FF7A30] text-xs font-bold ml-1">
-                          {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </Text>
                       </View>
                     ) : <View />}

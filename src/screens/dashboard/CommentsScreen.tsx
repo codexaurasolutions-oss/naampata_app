@@ -27,6 +27,15 @@ export default function CommentsScreen({ navigation }: any) {
     onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to reply.'),
   });
 
+  const deleteReplyMutation = useMutation({
+    mutationFn: (replyId: string) => api.comments.deleteReply(replyId),
+    onSuccess: () => {
+      Alert.alert('Deleted', 'Reply has been deleted.');
+      queryClient.invalidateQueries({ queryKey: ['vendorComments'] });
+    },
+    onError: () => Alert.alert('Error', 'Failed to delete reply.'),
+  });
+
   const comments = data?.data || [];
 
   const onRefresh = async () => {
@@ -38,6 +47,13 @@ export default function CommentsScreen({ navigation }: any) {
   const handleReply = (commentId: string) => {
     if (!replyContent.trim()) return;
     replyMutation.mutate({ commentId, content: replyContent.trim() });
+  };
+
+  const handleDeleteReply = (replyId: string) => {
+    Alert.alert('Delete Reply', 'Are you sure you want to delete this reply?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteReplyMutation.mutate(replyId) },
+    ]);
   };
 
   return (
@@ -61,10 +77,10 @@ export default function CommentsScreen({ navigation }: any) {
             <View key={comment.id} className="bg-white rounded-2xl p-4 mb-4 border border-slate-100 shadow-sm">
               <View className="flex-row items-center mb-2">
                 <View className="w-10 h-10 bg-slate-200 rounded-full items-center justify-center mr-3">
-                  <Icon name="person" size={20} color="#94A3B8" />
+                  <Text className="font-bold text-slate-600">{(comment.user?.fullName || comment.user?.name || comment.authorName || 'U').charAt(0)}</Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="font-bold text-slate-800">{comment.user?.fullName || comment.authorName || 'User'}</Text>
+                  <Text className="font-bold text-slate-800">{comment.user?.fullName || comment.user?.name || comment.authorName || 'User'}</Text>
                   <Text className="text-slate-400 text-xs">
                     {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : ''}
                   </Text>
@@ -75,10 +91,19 @@ export default function CommentsScreen({ navigation }: any) {
               {comment.replies && comment.replies.length > 0 && (
                 <View className="bg-slate-50 rounded-xl p-3 mb-3 ml-6">
                   {comment.replies.map((reply: any) => (
-                    <View key={reply.id} className="mb-2 last:mb-0">
-                      <Text className="text-xs font-bold text-[#112D4E]">You replied:</Text>
+                    <TouchableOpacity
+                      key={reply.id}
+                      className="mb-2 last:mb-0"
+                      onLongPress={() => handleDeleteReply(reply.id)}
+                    >
+                      <View className="flex-row justify-between items-start">
+                        <Text className="text-xs font-bold text-[#112D4E]">You replied:</Text>
+                        <TouchableOpacity onPress={() => handleDeleteReply(reply.id)}>
+                          <Icon name="delete-outline" size={14} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
                       <Text className="text-slate-600 text-sm">{reply.content || reply.text}</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               )}

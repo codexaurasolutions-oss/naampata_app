@@ -42,12 +42,19 @@ export default function AnalyticsScreen({ navigation }: any) {
   };
 
   const metricCards = [
-    { label: 'Profile Views', value: stats.views || stats.profileViews || 0, icon: 'visibility', color: '#3B82F6', bgColor: '#EFF6FF' },
-    { label: 'Total Leads', value: stats.leads || leadStats.total || 0, icon: 'mail', color: '#FF7A30', bgColor: '#FFF7ED' },
-    { label: 'Call Clicks', value: stats.callClicks || 0, icon: 'phone', color: '#10B981', bgColor: '#ECFDF5' },
-    { label: 'Avg Rating', value: stats.rating || stats.avgRating || '0.0', icon: 'star', color: '#F59E0B', bgColor: '#FFFBEB' },
-    { label: 'New Reviews', value: stats.reviews || stats.reviewCount || 0, icon: 'reviews', color: '#8B5CF6', bgColor: '#F5F3FF' },
-    { label: 'Listings', value: stats.listingsCount || stats.totalListings || 0, icon: 'storefront', color: '#06B6D4', bgColor: '#ECFEFF' },
+    { label: 'Profile Views', value: stats.views || stats.profileViews || 0, icon: 'visibility', color: '#3B82F6', bgColor: '#EFF6FF', trend: stats.viewsTrend || null },
+    { label: 'Total Leads', value: stats.leads || leadStats.total || 0, icon: 'mail', color: '#FF7A30', bgColor: '#FFF7ED', trend: stats.leadsTrend || null },
+    { label: 'Call Clicks', value: stats.callClicks || 0, icon: 'phone', color: '#10B981', bgColor: '#ECFDF5', trend: null },
+    { label: 'Avg Rating', value: stats.rating || stats.avgRating || '0.0', icon: 'star', color: '#F59E0B', bgColor: '#FFFBEB', trend: null },
+    { label: 'New Reviews', value: stats.reviews || stats.reviewCount || 0, icon: 'reviews', color: '#8B5CF6', bgColor: '#F5F3FF', trend: null },
+    { label: 'Listings', value: stats.listingsCount || stats.totalListings || 0, icon: 'storefront', color: '#06B6D4', bgColor: '#ECFEFF', trend: null },
+  ];
+
+  const performanceBreakdown = [
+    { label: 'Search Appearances', value: stats.searchAppearances || 0, icon: 'search', color: '#3B82F6' },
+    { label: 'Website Clicks', value: stats.websiteClicks || 0, icon: 'language', color: '#FF7A30' },
+    { label: 'Direction Clicks', value: stats.directionClicks || 0, icon: 'directions', color: '#10B981' },
+    { label: 'Photo Views', value: stats.photoViews || 0, icon: 'photo', color: '#8B5CF6' },
   ];
 
   return (
@@ -106,6 +113,27 @@ export default function AnalyticsScreen({ navigation }: any) {
                   </View>
                   <Text className="text-2xl font-black text-slate-900">{card.value}</Text>
                   <Text className="text-sm font-medium text-slate-500 mt-1">{card.label}</Text>
+                  {card.trend !== null && card.trend !== undefined && (
+                    <View className="flex-row items-center mt-1">
+                      <Icon name={Number(card.trend) >= 0 ? 'trending-up' : 'trending-down'} size={14} color={Number(card.trend) >= 0 ? '#22C55E' : '#EF4444'} />
+                      <Text className={`text-xs font-bold ml-1 ${Number(card.trend) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {Number(card.trend) >= 0 ? '+' : ''}{card.trend}%
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+
+            <Text className="text-xl font-bold text-[#112D4E] mb-4">Performance Breakdown</Text>
+            <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-8">
+              {performanceBreakdown.map((item, idx) => (
+                <View key={idx} className="flex-row items-center mb-4 pb-4 border-b border-slate-50 last:border-b-0 last:mb-0 last:pb-0">
+                  <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: `${item.color}15` }}>
+                    <Icon name={item.icon} size={20} color={item.color} />
+                  </View>
+                  <Text className="flex-1 text-slate-700 font-medium">{item.label}</Text>
+                  <Text className="font-black text-slate-900 text-lg">{item.value}</Text>
                 </View>
               ))}
             </View>

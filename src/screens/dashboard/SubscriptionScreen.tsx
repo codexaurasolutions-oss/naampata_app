@@ -6,6 +6,8 @@ import { api } from '../../services/api';
 
 export default function SubscriptionScreen({ navigation }: any) {
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+  const [showInvoices, setShowInvoices] = useState(false);
+  const [comparePlans, setComparePlans] = useState(false);
 
   const { data: activeSub, isLoading: loadingActive } = useQuery({
     queryKey: ['activeSubscription'],
@@ -17,7 +19,13 @@ export default function SubscriptionScreen({ navigation }: any) {
     queryFn: () => api.subscriptions.getPricingPlans(),
   });
 
+  const { data: invoicesData } = useQuery({
+    queryKey: ['myInvoices'],
+    queryFn: () => api.subscriptions.getMyInvoices(),
+  });
+
   const plans = plansData?.data || plansData || [];
+  const invoices = invoicesData?.data || [];
 
   const checkoutMutation = useMutation({
     mutationFn: (planId: string) => api.subscriptions.createCheckout(planId),
@@ -70,13 +78,47 @@ export default function SubscriptionScreen({ navigation }: any) {
             <View className="ml-4 flex-1">
               <Text className="text-slate-500 font-medium text-xs uppercase tracking-widest mb-1">Current Plan</Text>
               <Text className="text-lg font-black text-slate-900">{activeSub.plan?.name || 'Free Tier'}</Text>
+              {activeSub.expiresAt && (
+                <Text className="text-slate-400 text-xs">Renews {new Date(activeSub.expiresAt).toLocaleDateString()}</Text>
+              )}
             </View>
           </View>
         )}
 
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-xl font-bold text-slate-900">Available Plans</Text>
+          <TouchableOpacity onPress={() => setComparePlans(!comparePlans)}>
+            <Text className="text-[#FF7A30] font-bold text-sm">{comparePlans ? 'Hide Comparison' : 'Compare Plans'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {comparePlans && plans.length > 0 && (
+          <View className="bg-white rounded-3xl border border-slate-100 p-4 shadow-sm mb-6 overflow-hidden">
+            <Text className="font-bold text-[#112D4E] mb-3">Feature Comparison</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View>
+                <View className="flex-row border-b border-slate-100 pb-2 mb-2">
+                  <Text className="w-32 font-bold text-slate-500 text-xs">Feature</Text>
+                  {plans.map((plan: any) => (
+                    <Text key={plan.id} className="w-28 font-bold text-[#112D4E] text-xs text-center">{plan.name}</Text>
+                  ))}
+                </View>
+                {['Profile Views', 'Leads', 'Reviews', 'Offers', 'Analytics'].map((feature, idx) => (
+                  <View key={idx} className="flex-row border-b border-slate-50 py-2">
+                    <Text className="w-32 text-slate-600 text-xs">{feature}</Text>
+                    {plans.map((plan: any) => (
+                      <View key={plan.id} className="w-28 items-center">
+                        <Icon name={plan.features?.[idx] ? 'check-circle' : 'cancel'} size={14} color={plan.features?.[idx] ? '#22C55E' : '#CBD5E1'} />
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+
         <View className="mb-4">
-          <Text className="text-xl font-bold text-slate-900 mb-4">Available Plans</Text>
-          
           {plans.map((plan: any, index: number) => {
             const isCurrentPlan = activeSub?.planId === plan.id;
             const isProcessing = processingPlanId === plan.id;
@@ -84,7 +126,7 @@ export default function SubscriptionScreen({ navigation }: any) {
             return (
               <View key={plan.id || index} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm mb-6">
                 <View className="flex-row justify-between items-start mb-4">
-                  <View>
+                  <View className="flex-1">
                     <Text className="text-2xl font-black text-[#112D4E] mb-1">{plan.name}</Text>
                     <Text className="text-slate-500">{plan.description}</Text>
                   </View>
@@ -97,7 +139,7 @@ export default function SubscriptionScreen({ navigation }: any) {
 
                 <View className="flex-row items-end mb-6">
                   <Text className="text-4xl font-black text-slate-900">${plan.price}</Text>
-                  <Text className="text-slate-500 font-medium mb-1 ml-1">/ {plan.billingCycle}</Text>
+                  <Text className="text-slate-500 font-medium mb-1 ml-1">/ {plan.billingCycle || 'month'}</Text>
                 </View>
 
                 <View className="mb-8">
@@ -107,9 +149,15 @@ export default function SubscriptionScreen({ navigation }: any) {
                       <Text className="text-slate-700 ml-3 font-medium">{feature}</Text>
                     </View>
                   ))}
+                  {!plan.features && (
+                    <View className="flex-row items-center mb-3">
+                      <Icon name="check-circle" size={20} color="#FF7A30" />
+                      <Text className="text-slate-700 ml-3 font-medium">All basic features included</Text>
+                    </View>
+                  )}
                 </View>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   className={`w-full py-4 rounded-2xl items-center flex-row justify-center ${isCurrentPlan ? 'bg-slate-200' : plan.isPopular ? 'bg-[#FF7A30]' : 'bg-slate-900'}`}
                   onPress={() => !isCurrentPlan && !isProcessing && handleSubscribe(plan.id)}
                   disabled={isCurrentPlan || isProcessing}
@@ -135,8 +183,40 @@ export default function SubscriptionScreen({ navigation }: any) {
               <Text className="text-slate-500 text-center font-medium">No plans available at the moment.</Text>
             </View>
           )}
-
         </View>
+
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-xl font-bold text-slate-900">Invoice History</Text>
+          <TouchableOpacity onPress={() => setShowInvoices(!showInvoices)}>
+            <Text className="text-[#FF7A30] font-bold text-sm">{showInvoices ? 'Hide' : 'Show Invoices'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showInvoices && (
+          invoices.length > 0 ? (
+            invoices.map((invoice: any, index: number) => (
+              <View key={index} className="bg-white p-4 rounded-2xl border border-slate-100 mb-3 flex-row justify-between items-center shadow-sm">
+                <View>
+                  <Text className="font-bold text-slate-800">${invoice.amount || '0.00'}</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : ''} - {invoice.planName || 'Subscription'}
+                  </Text>
+                </View>
+                <View className={`px-3 py-1 rounded-full border ${invoice.status === 'paid' ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                  <Text className={`text-xs font-black uppercase ${invoice.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {invoice.status || 'Pending'}
+                  </Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View className="bg-white p-6 rounded-3xl border border-slate-100 items-center justify-center mb-6">
+              <Icon name="receipt" size={48} color="#CBD5E1" />
+              <Text className="text-slate-500 font-medium mt-2">No invoices yet.</Text>
+            </View>
+          )
+        )}
+
         <View className="h-10" />
       </ScrollView>
     </View>

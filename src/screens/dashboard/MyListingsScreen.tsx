@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image, RefreshControl, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 
 export default function MyListingsScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = React.useState(false);
+  const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['myListings'],
@@ -14,10 +15,39 @@ export default function MyListingsScreen({ navigation }: any) {
 
   const listings = data?.data || [];
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.listings.delete(id),
+    onSuccess: () => {
+      Alert.alert('Deleted', 'Listing deleted successfully.');
+      queryClient.invalidateQueries({ queryKey: ['myListings'] });
+    },
+    onError: () => Alert.alert('Error', 'Failed to delete listing.'),
+  });
+
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Delete Listing', 'Are you sure you want to delete this listing? This action cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate(id) },
+    ]);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+        return { bg: 'bg-green-100', text: 'text-green-700', label: 'Approved' };
+      case 'pending':
+        return { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pending' };
+      case 'rejected':
+        return { bg: 'bg-red-100', text: 'text-red-700', label: 'Rejected' };
+      default:
+        return { bg: 'bg-slate-100', text: 'text-slate-600', label: status || 'Unknown' };
+    }
   };
 
   return (
@@ -61,41 +91,51 @@ export default function MyListingsScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         ) : (
-          listings.map((biz: any, index: number) => (
-            <View key={biz.id || index} className="bg-white rounded-3xl p-4 mb-4 shadow-sm border border-slate-100">
-              <View className="flex-row mb-4">
-                <Image
-                  source={{ uri: biz.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
-                  className="w-20 h-20 rounded-2xl bg-slate-200"
-                />
-                <View className="flex-1 ml-4 justify-center">
-                  <Text className="text-lg font-bold text-slate-900 mb-1">{biz.name}</Text>
-                  <Text className="text-slate-500 text-xs mb-2">{biz.category?.name || 'Category'}</Text>
-                  <View className={`self-start px-2 py-1 rounded-md ${biz.status === 'approved' || biz.status === 'APPROVED' ? 'bg-green-100' : 'bg-orange-100'}`}>
-                    <Text className={`text-[10px] font-black uppercase ${biz.status === 'approved' || biz.status === 'APPROVED' ? 'text-green-700' : 'text-orange-700'}`}>
-                      {biz.status || 'Pending'}
-                    </Text>
+          listings.map((biz: any, index: number) => {
+            const badge = getStatusBadge(biz.status);
+            return (
+              <View key={biz.id || index} className="bg-white rounded-3xl p-4 mb-4 shadow-sm border border-slate-100">
+                <View className="flex-row mb-4">
+                  <Image
+                    source={{ uri: biz.coverImageUrl || biz.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
+                    className="w-20 h-20 rounded-2xl bg-slate-200"
+                  />
+                  <View className="flex-1 ml-4 justify-center">
+                    <Text className="text-lg font-bold text-slate-900 mb-1">{biz.title || biz.name}</Text>
+                    <Text className="text-slate-500 text-xs mb-2">{biz.category?.name || 'Category'}</Text>
+                    <View className={`self-start px-3 py-1 rounded-full ${badge.bg}`}>
+                      <Text className={`text-[10px] font-black uppercase ${badge.text}`}>
+                        {badge.label}
+                      </Text>
+                    </View>
                   </View>
                 </View>
+                <View className="flex-row border-t border-slate-50 pt-3">
+                  <TouchableOpacity
+                    className="flex-1 py-2 items-center flex-row justify-center border-r border-slate-100"
+                    onPress={() => navigation.navigate('EditListing', { listingId: biz.id })}
+                  >
+                    <Icon name="edit" size={18} color="#64748B" />
+                    <Text className="font-bold text-slate-600 ml-2">Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 py-2 items-center flex-row justify-center border-r border-slate-100"
+                    onPress={() => navigation.navigate('BusinessDetail', { id: biz.id, slug: biz.slug })}
+                  >
+                    <Icon name="visibility" size={18} color="#3B82F6" />
+                    <Text className="font-bold text-blue-500 ml-2">View</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 py-2 items-center flex-row justify-center"
+                    onPress={() => handleDelete(biz.id)}
+                  >
+                    <Icon name="delete-outline" size={18} color="#EF4444" />
+                    <Text className="font-bold text-red-500 ml-2">Delete</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View className="flex-row border-t border-slate-50 pt-3">
-                <TouchableOpacity
-                  className="flex-1 py-2 items-center flex-row justify-center border-r border-slate-100"
-                  onPress={() => navigation.navigate('EditListing', { listingId: biz.id })}
-                >
-                  <Icon name="edit" size={18} color="#64748B" />
-                  <Text className="font-bold text-slate-600 ml-2">Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="flex-1 py-2 items-center flex-row justify-center"
-                  onPress={() => navigation.navigate('BusinessDetail', { id: biz.id, slug: biz.slug })}
-                >
-                  <Icon name="visibility" size={18} color="#3B82F6" />
-                  <Text className="font-bold text-blue-500 ml-2">View</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
         <View className="h-20" />
       </ScrollView>

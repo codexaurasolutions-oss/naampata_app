@@ -173,10 +173,10 @@ export default function DashboardScreen({ navigation }: any) {
                   onPress={() => navigation.navigate('EditListing', { listingId: listing.id })}
                 >
                   <Image
-                    source={{ uri: listing.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
+                    source={{ uri: listing.coverImageUrl || listing.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
                     className="w-full h-24 rounded-xl bg-slate-200 mb-2"
                   />
-                  <Text className="font-bold text-slate-800" numberOfLines={1}>{listing.name}</Text>
+                  <Text className="font-bold text-slate-800" numberOfLines={1}>{listing.title || listing.name}</Text>
                   <Text className="text-slate-400 text-xs">{listing.category?.name || 'Business'}</Text>
                 </TouchableOpacity>
               ))}

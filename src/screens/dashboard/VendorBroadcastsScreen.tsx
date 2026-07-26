@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Alert, TextInput, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
@@ -7,6 +7,9 @@ import { api } from '../../services/api';
 export default function VendorBroadcastsScreen({ navigation }: any) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = React.useState(false);
+  const [respondModalVisible, setRespondModalVisible] = useState(false);
+  const [selectedBroadcastId, setSelectedBroadcastId] = useState<string | null>(null);
+  const [responseMessage, setResponseMessage] = useState('');
 
   const { data: inboxData, isLoading, refetch } = useQuery({
     queryKey: ['vendorBroadcastInbox'],
@@ -22,6 +25,9 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
     mutationFn: ({ id, data }: { id: string; data: any }) => api.broadcasts.respond(id, data),
     onSuccess: () => {
       Alert.alert('Sent', 'Your response has been sent!');
+      setRespondModalVisible(false);
+      setResponseMessage('');
+      setSelectedBroadcastId(null);
       queryClient.invalidateQueries({ queryKey: ['vendorBroadcastInbox'] });
     },
     onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to respond.'),
@@ -37,15 +43,14 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
   };
 
   const handleRespond = (broadcastId: string) => {
-    Alert.prompt?.(
-      'Respond to Broadcast',
-      'Enter your message:',
-      (message: string) => {
-        if (message?.trim()) {
-          respondMutation.mutate({ id: broadcastId, data: { message: message.trim() } });
-        }
-      }
-    ) ?? Alert.alert('Respond', 'Open this broadcast to send a response from the detail screen.');
+    setSelectedBroadcastId(broadcastId);
+    setResponseMessage('');
+    setRespondModalVisible(true);
+  };
+
+  const submitResponse = () => {
+    if (!selectedBroadcastId || !responseMessage.trim()) return;
+    respondMutation.mutate({ id: selectedBroadcastId, data: { message: responseMessage.trim() } });
   };
 
   return (
@@ -93,7 +98,13 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
           <ActivityIndicator color="#FF7A30" className="my-10" />
         ) : broadcasts.length > 0 ? (
           broadcasts.map((item: any) => (
-            <View key={item.id} className="bg-white rounded-2xl p-4 mb-4 border border-slate-100 shadow-sm">
+            <TouchableOpacity
+              key={item.id}
+              className="bg-white rounded-2xl p-4 mb-4 border border-slate-100 shadow-sm"
+              onPress={() => {
+                if (item.status === 'new') handleRespond(item.id);
+              }}
+            >
               <View className="flex-row justify-between items-start mb-2">
                 <View className="flex-1 mr-2">
                   <Text className="text-lg font-bold text-[#112D4E]" numberOfLines={2}>{item.title || item.requirement || 'Broadcast Request'}</Text>
@@ -135,7 +146,14 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
                   <Text className="text-white font-bold ml-2">Respond Now</Text>
                 </TouchableOpacity>
               )}
-            </View>
+
+              {item.status === 'responded' && item.response && (
+                <View className="bg-green-50 p-3 rounded-xl border border-green-100 mt-2">
+                  <Text className="text-green-700 font-bold text-xs mb-1">Your Response:</Text>
+                  <Text className="text-green-600 text-sm">{item.response.message || item.response}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           ))
         ) : (
           <View className="items-center justify-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
@@ -148,6 +166,44 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
         )}
         <View className="h-20" />
       </ScrollView>
+
+      <Modal visible={respondModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <View className="flex-1 bg-[#FDFCFB]">
+          <View className="bg-white pt-14 pb-4 px-4 shadow-sm flex-row items-center justify-between">
+            <TouchableOpacity onPress={() => { setRespondModalVisible(false); setResponseMessage(''); }}>
+              <Icon name="close" size={24} color="#112D4E" />
+            </TouchableOpacity>
+            <Text className="text-xl font-bold text-[#112D4E]">Respond to Broadcast</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <ScrollView className="flex-1 px-4 py-6" keyboardShouldPersistTaps="handled">
+            <Text className="font-bold text-slate-700 mb-2">Your Message</Text>
+            <TextInput
+              className="bg-white border border-slate-200 rounded-2xl p-4 h-40 text-slate-900 mb-4"
+              placeholder="Describe how you can help..."
+              placeholderTextColor="#94A3B8"
+              multiline
+              textAlignVertical="top"
+              value={responseMessage}
+              onChangeText={setResponseMessage}
+              autoFocus
+            />
+
+            <TouchableOpacity
+              className={`py-4 rounded-xl items-center ${responseMessage.trim() ? 'bg-[#FF7A30]' : 'bg-slate-200'}`}
+              onPress={submitResponse}
+              disabled={!responseMessage.trim() || respondMutation.isPending}
+            >
+              {respondMutation.isPending ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text className="text-white font-bold text-lg">Send Response</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }

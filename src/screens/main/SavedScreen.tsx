@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 
-type TabType = 'businesses' | 'offers';
+type TabType = 'businesses' | 'offers' | 'events';
 
 export default function SavedScreen({ navigation }: any) {
   const { isAuthenticated } = useAuthStore();
@@ -22,7 +22,7 @@ export default function SavedScreen({ navigation }: any) {
   const { data: savedOffersData, isLoading: loadingOffers, refetch: refetchOffers } = useQuery({
     queryKey: ['savedOffers'],
     queryFn: () => api.users.getSavedOffers(),
-    enabled: isAuthenticated && activeTab === 'offers',
+    enabled: isAuthenticated && (activeTab === 'offers' || activeTab === 'events'),
   });
 
   const removeFavoriteMutation = useMutation({
@@ -42,9 +42,12 @@ export default function SavedScreen({ navigation }: any) {
   });
 
   const businesses = favoritesData?.data || [];
-  const offers = savedOffersData?.data || [];
+  const savedOffersRaw = savedOffersData?.data || [];
+  const offers = savedOffersRaw.filter((item: any) => item._type === 'deal' || item.type === 'deal' || (!item.startDate && !item.eventDate));
+  const events = savedOffersRaw.filter((item: any) => item._type === 'event' || item.type === 'event' || item.startDate || item.eventDate);
+
   const isLoading = activeTab === 'businesses' ? loadingBiz : loadingOffers;
-  const items = activeTab === 'businesses' ? businesses : offers;
+  const items = activeTab === 'businesses' ? businesses : activeTab === 'offers' ? offers : events;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -89,6 +92,12 @@ export default function SavedScreen({ navigation }: any) {
     );
   }
 
+  const tabs: { key: TabType; label: string; icon: string }[] = [
+    { key: 'businesses', label: 'Businesses', icon: 'storefront' },
+    { key: 'offers', label: 'Offers', icon: 'local-offer' },
+    { key: 'events', label: 'Events', icon: 'event' },
+  ];
+
   return (
     <View className="flex-1 bg-[#F8FAFC] pt-12 px-4">
       <View className="flex-row justify-between items-end mb-4">
@@ -98,18 +107,16 @@ export default function SavedScreen({ navigation }: any) {
       </View>
 
       <View className="flex-row bg-slate-100 p-1 rounded-2xl mb-6">
-        <TouchableOpacity
-          className={`flex-1 py-3 rounded-xl items-center ${activeTab === 'businesses' ? 'bg-white shadow-sm' : ''}`}
-          onPress={() => setActiveTab('businesses')}
-        >
-          <Text className={`font-bold ${activeTab === 'businesses' ? 'text-[#112D4E]' : 'text-slate-500'}`}>Businesses</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className={`flex-1 py-3 rounded-xl items-center ${activeTab === 'offers' ? 'bg-white shadow-sm' : ''}`}
-          onPress={() => setActiveTab('offers')}
-        >
-          <Text className={`font-bold ${activeTab === 'offers' ? 'text-[#112D4E]' : 'text-slate-500'}`}>Offers & Deals</Text>
-        </TouchableOpacity>
+        {tabs.map(tab => (
+          <TouchableOpacity
+            key={tab.key}
+            className={`flex-1 py-3 rounded-xl items-center ${activeTab === tab.key ? 'bg-white shadow-sm' : ''}`}
+            onPress={() => setActiveTab(tab.key)}
+          >
+            <Icon name={tab.icon} size={16} color={activeTab === tab.key ? '#112D4E' : '#94A3B8'} />
+            <Text className={`font-bold text-xs mt-1 ${activeTab === tab.key ? 'text-[#112D4E]' : 'text-slate-500'}`}>{tab.label}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <ScrollView
@@ -121,29 +128,40 @@ export default function SavedScreen({ navigation }: any) {
           <ActivityIndicator color="#FF7A30" className="my-10" />
         ) : items.length > 0 ? (
           items.map((item: any, index: number) => {
-            const isOffer = activeTab === 'offers';
-            const business = isOffer ? (item.offerEvent?.business || item.business) : item.business;
-            const imgUrl = isOffer
-              ? (item.offerEvent?.imageUrl || item.offerEvent?.image)
-              : (business?.coverImage || item.coverImage);
-            const title = isOffer
-              ? (item.offerEvent?.title || item.title)
-              : (business?.name || item.name || item.businessName);
-            const subtitle = isOffer
-              ? (item.offerEvent?.type || 'Offer')
-              : (business?.category?.name || 'Business');
-            const rating = business?.rating || item.rating;
-            const itemId = isOffer ? (item.offerEventId || item.offerEvent?.id || item.id) : (item.businessId || business?.id || item.id);
+            let imgUrl = '';
+            let title = '';
+            let subtitle = '';
+            let rating = null;
+            let itemId = '';
+            let onPressFn: (() => void) | undefined;
+
+            if (activeTab === 'businesses') {
+              const biz = item.business || item;
+              imgUrl = biz.coverImageUrl || biz.coverImage || '';
+              title = biz.title || biz.name || biz.businessName || 'Business';
+              subtitle = biz.category?.name || 'Business';
+              rating = biz.averageRating || biz.rating;
+              itemId = biz.id || item.businessId || item.id;
+              onPressFn = () => navigation.navigate('BusinessDetail', { id: itemId });
+            } else if (activeTab === 'offers') {
+              const offer = item.offerEvent || item;
+              imgUrl = offer.imageUrl || offer.bannerUrl || offer.image || '';
+              title = offer.title || 'Offer';
+              subtitle = offer.business?.businessName || offer.business?.name || 'Deal';
+              itemId = item.offerEventId || offer.id || item.id;
+              onPressFn = () => navigation.navigate('BusinessDetail', { id: offer.businessId || offer.business?.id });
+            } else {
+              const event = item.offerEvent || item;
+              imgUrl = event.imageUrl || event.bannerUrl || '';
+              title = event.title || 'Event';
+              subtitle = event.business?.businessName || event.business?.name || 'Event';
+              itemId = item.offerEventId || event.id || item.id;
+              onPressFn = () => navigation.navigate('BusinessDetail', { id: event.businessId || event.business?.id });
+            }
 
             return (
               <View key={item.id || index} className="bg-white rounded-3xl p-3 mb-4 shadow-sm border border-slate-100 flex-row items-center">
-                <TouchableOpacity
-                  className="flex-row items-center flex-1"
-                  onPress={() => {
-                    if (isOffer) return;
-                    navigation.navigate('BusinessDetail', { id: itemId });
-                  }}
-                >
+                <TouchableOpacity className="flex-row items-center flex-1" onPress={onPressFn}>
                   <Image
                     source={{ uri: imgUrl || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' }}
                     className="w-24 h-24 rounded-2xl bg-slate-200"
@@ -151,7 +169,7 @@ export default function SavedScreen({ navigation }: any) {
                   <View className="flex-1 ml-4 justify-center">
                     <Text className="text-xs font-bold mb-1 text-slate-400">{subtitle}</Text>
                     <Text className="text-lg font-bold text-[#112D4E] mb-1" numberOfLines={2}>{title || 'Saved Item'}</Text>
-                    {!isOffer && rating ? (
+                    {activeTab === 'businesses' && rating ? (
                       <View className="flex-row items-center">
                         <Icon name="star" size={14} color="#F59E0B" />
                         <Text className="text-slate-900 font-bold text-xs ml-1">{Number(rating).toFixed(1)}</Text>
@@ -159,10 +177,7 @@ export default function SavedScreen({ navigation }: any) {
                     ) : null}
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  className="p-2"
-                  onPress={() => handleUnsave(item)}
-                >
+                <TouchableOpacity className="p-2" onPress={() => handleUnsave(item)}>
                   <Icon name="bookmark" size={24} color="#FF7A30" />
                 </TouchableOpacity>
               </View>
@@ -170,11 +185,17 @@ export default function SavedScreen({ navigation }: any) {
           })
         ) : (
           <View className="items-center justify-center py-20 mt-10">
-            <Icon name={activeTab === 'businesses' ? 'storefront' : 'local-offer'} size={64} color="#E2E8F0" />
+            <Icon
+              name={activeTab === 'businesses' ? 'storefront' : activeTab === 'offers' ? 'local-offer' : 'event'}
+              size={64}
+              color="#E2E8F0"
+            />
             <Text className="text-slate-400 mt-4 text-center px-8">
               {activeTab === 'businesses'
                 ? "You haven't saved any businesses yet."
-                : "You haven't clipped any offers or deals yet."}
+                : activeTab === 'offers'
+                  ? "You haven't clipped any offers or deals yet."
+                  : "You haven't saved any events yet."}
             </Text>
           </View>
         )}
