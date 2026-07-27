@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image, StyleSheet, Keyboard } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuthStore } from '../../stores/authStore';
-import { api } from '../../services/api';
 
 export default function LoginScreen({ navigation, route }: any) {
   const redirectScreen = route?.params?.redirectScreen;
@@ -12,7 +11,7 @@ export default function LoginScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const { login } = useAuthStore();
+  const login = useAuthStore((s) => s.login);
 
   const handleLogin = async () => {
     Keyboard.dismiss();
@@ -24,39 +23,16 @@ export default function LoginScreen({ navigation, route }: any) {
     }
 
     setLoading(true);
-    console.log('[LOGIN] Attempting login for:', email);
+    console.log('[LOGIN] Attempting login for:', email.trim());
 
     try {
-      const response = await api.auth.login({ email: email.trim(), password });
-      console.log('[LOGIN] Response received:', JSON.stringify(response).substring(0, 200));
-
-      const user = response?.user;
-      const accessToken = response?.tokens?.accessToken || response?.token;
-
-      if (!accessToken) {
-        console.log('[LOGIN] No token in response:', JSON.stringify(response));
-        setErrorMsg('Login succeeded but no token received. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('token', accessToken);
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      if (response?.tokens?.refreshToken) {
-        await AsyncStorage.setItem('refreshToken', response.tokens.refreshToken);
-      }
-
-      const { useAuthStore: getStore } = require('../../stores/authStore');
-      getStore.getState().user = user;
-      getStore.getState().token = accessToken;
-      getStore.getState().isAuthenticated = true;
-      getStore.setState({ user, token: accessToken, isAuthenticated: true, isLoading: false });
-
-      console.log('[LOGIN] Success! User:', user?.email, 'Role:', user?.role);
+      await login({ email: email.trim(), password });
+      console.log('[LOGIN] Login successful!');
 
       if (redirectScreen) {
         navigation.replace(redirectScreen, redirectParams || {});
+      } else {
+        navigation.getParent()?.navigate('Main');
       }
     } catch (error: any) {
       console.log('[LOGIN] Error:', error?.message, 'Status:', error?.response?.status);
@@ -66,11 +42,7 @@ export default function LoginScreen({ navigation, route }: any) {
       const msg = error.response?.data?.message || error.response?.data?.error;
 
       if (status === 401) {
-        if (msg) {
-          setErrorMsg(msg);
-        } else {
-          setErrorMsg('Email not verified or invalid credentials. Check your email for verification code.');
-        }
+        setErrorMsg(msg || 'Invalid email or password. Please try again.');
       } else if (status === 404) {
         setErrorMsg('Account not found. Please register first.');
       } else if (status === 0 || !error.response) {

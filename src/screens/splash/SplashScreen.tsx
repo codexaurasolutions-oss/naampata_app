@@ -32,7 +32,7 @@ export default function SplashScreen({ navigation }: any) {
         if (state.isAuthenticated && state.token) {
           navigation.replace('Main');
         } else {
-          navigation.replace('Main');
+          navigation.replace('Auth');
         }
       }, 1500);
     };
