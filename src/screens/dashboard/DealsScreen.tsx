@@ -20,9 +20,9 @@ export default function DealsScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color="#112D4E" />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-[#112D4E] ml-4">My Offers & Deals</Text>
+          <Text className="text-xl font-bold text-[#112D4E] ml-4">My Offers</Text>
         </View>
-        <TouchableOpacity className="bg-[#FF7A30] w-10 h-10 rounded-full items-center justify-center shadow-sm">
+        <TouchableOpacity onPress={() => navigation.navigate('ManageOffers')} className="bg-[#FF7A30] w-10 h-10 rounded-full items-center justify-center shadow-sm">
           <Icon name="add" size={24} color="#FFF" />
         </TouchableOpacity>
       </View>
@@ -35,13 +35,13 @@ export default function DealsScreen({ navigation }: any) {
             <View className="w-24 h-24 bg-purple-50 rounded-full items-center justify-center mb-6 border border-purple-100">
               <Icon name="local-offer" size={48} color="#A855F7" />
             </View>
-            <Text className="text-xl font-bold text-slate-900 mb-2">No Active Deals</Text>
+            <Text className="text-xl font-bold text-slate-900 mb-2">No Active Offers</Text>
             <Text className="text-slate-500 text-center px-6 mb-8">
               Post an exclusive offer or deal to attract more customers to your business!
             </Text>
-            <TouchableOpacity className="bg-slate-900 px-8 py-4 rounded-xl flex-row items-center">
+            <TouchableOpacity onPress={() => navigation.navigate('ManageOffers')} className="bg-slate-900 px-8 py-4 rounded-xl flex-row items-center">
               <Icon name="add" size={20} color="#FFF" />
-              <Text className="text-white font-bold ml-2">Create New Deal</Text>
+              <Text className="text-white font-bold ml-2">Create New Offer</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -67,11 +67,11 @@ export default function DealsScreen({ navigation }: any) {
                 <View className="flex-row justify-between items-center mt-4 pt-4 border-t border-slate-50">
                   <View className="flex-row items-center">
                     <Icon name="visibility" size={16} color="#94A3B8" />
-                    <Text className="text-slate-500 text-xs font-medium ml-1 mr-4">120 Views</Text>
+                    <Text className="text-slate-500 text-xs font-medium ml-1 mr-4">{deal.views || 0} Views</Text>
                     <Icon name="touch-app" size={16} color="#94A3B8" />
-                    <Text className="text-slate-500 text-xs font-medium ml-1">45 Clicks</Text>
+                    <Text className="text-slate-500 text-xs font-medium ml-1">{deal.clicks || 0} Clicks</Text>
                   </View>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => navigation.navigate('ManageOffers')}>
                     <Text className="text-[#FF7A30] font-bold text-sm">Edit</Text>
                   </TouchableOpacity>
                 </View>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, ActivityIndicator, Dimensions, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, ActivityIndicator, Dimensions, StyleSheet, PermissionsAndroid, Platform, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
@@ -18,6 +18,41 @@ export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  const detectMyLocation = async () => {
+    setLocationLoading(true);
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          { title: 'Location Permission', message: 'Naampata needs your location to find nearby businesses.', buttonPositive: 'Allow', buttonNegative: 'Deny' }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          setLocationLoading(false);
+          Alert.alert('Location Denied', 'Please enable location in settings.');
+          return;
+        }
+      }
+      const geo = (globalThis as any).navigator?.geolocation;
+      if (!geo) {
+        setLocationLoading(false);
+        Alert.alert('Error', 'Geolocation not available on this device.');
+        return;
+      }
+      geo.getCurrentPosition(
+        (pos: any) => {
+          setLocationLoading(false);
+          navigation.navigate('Search', { query: '', latitude: pos.coords.latitude, longitude: pos.coords.longitude, radius: 10, sortBy: 'distance' });
+        },
+        () => { setLocationLoading(false); Alert.alert('Location Error', 'Could not get your location. Please try again.'); },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      );
+    } catch {
+      setLocationLoading(false);
+      Alert.alert('Error', 'Failed to get location.');
+    }
+  };
   const [featuredPage, setFeaturedPage] = useState(1);
   const [allFeatured, setAllFeatured] = useState<any[]>([]);
 
@@ -42,10 +77,18 @@ export default function HomeScreen({ navigation }: any) {
 
   const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
   const newFeatured = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
-  if (featuredPage === 1 && newFeatured.length > 0 && allFeatured.length === 0) {
-    setAllFeatured(newFeatured);
-  }
-  const featuredBusinesses = featuredPage === 1 ? allFeatured : allFeatured;
+
+  useEffect(() => {
+    if (newFeatured.length > 0) {
+      if (featuredPage === 1) {
+        setAllFeatured(newFeatured);
+      } else {
+        setAllFeatured(prev => [...prev, ...newFeatured.filter((b: any) => !prev.some((p: any) => (p.id || p._id) === (b.id || b._id)))]);
+      }
+    }
+  }, [newFeatured, featuredPage]);
+
+  const featuredBusinesses = allFeatured;
   const topCities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
   const latestOffers = Array.isArray(offersData) ? offersData : (offersData?.data || offersData?.offers || []);
   const countries = Array.isArray(countriesData) ? countriesData : (countriesData?.data || []);
@@ -111,6 +154,20 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           </FadeInView>
 
+          <FadeInView delay={200} direction="up" style={{ width: '100%', marginBottom: 24 }}>
+            <TouchableOpacity style={s.detectLocationBtn} onPress={detectMyLocation} disabled={locationLoading}>
+              {locationLoading ? (
+                <ActivityIndicator size="small" color="#FF7A30" />
+              ) : (
+                <Icon name="my-location" size={20} color="#FF7A30" />
+              )}
+              <Text style={s.detectLocationText}>
+                {locationLoading ? 'Detecting Location...' : 'Detect My Location — Find Businesses Near Me'}
+              </Text>
+              <Icon name="chevron-right" size={20} color="#CBD5E1" />
+            </TouchableOpacity>
+          </FadeInView>
+
           <View style={{ width: '100%', marginBottom: 32 }}>
             <FadeInView delay={250} direction="up">
               <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('Offers')}>
@@ -118,8 +175,8 @@ export default function HomeScreen({ navigation }: any) {
                   <Icon name="local-offer" size={32} color="#F97316" />
                 </View>
                 <View style={s.featureTextWrap}>
-                  <Text style={s.featureTitle}>Hot Local Deals</Text>
-                  <Text style={s.featureSubtitle}>Best deals & events near you</Text>
+                  <Text style={s.featureTitle}>Hot Local Offers</Text>
+                  <Text style={s.featureSubtitle}>Best offers & events near you</Text>
                 </View>
               </TouchableOpacity>
             </FadeInView>
@@ -308,7 +365,7 @@ export default function HomeScreen({ navigation }: any) {
           <View style={s.sectionWhite}>
             <FadeInView delay={100} direction="up">
               <View style={s.sectionHeader}>
-                <Text style={s.sectionTitle}>Latest Deals</Text>
+                <Text style={s.sectionTitle}>Latest Offers</Text>
                 <View style={s.sectionDivider} />
               </View>
             </FadeInView>
@@ -466,4 +523,6 @@ const s = StyleSheet.create({
   testimonialStars: { flexDirection: 'row', marginBottom: 8, gap: 2 },
   testimonialText: { color: '#475569', fontSize: 14, lineHeight: 22, marginBottom: 8 },
   testimonialName: { color: '#94A3B8', fontWeight: '700', fontSize: 13 },
+  detectLocationBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: '#FED7AA', gap: 12 },
+  detectLocationText: { flex: 1, fontWeight: '700', fontSize: 13, color: '#FF7A30' },
 });

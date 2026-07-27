@@ -19,13 +19,13 @@ export default function ExpertQuoteScreen({ navigation }: any) {
     queryKey: ['categories'],
     queryFn: () => api.categories.getAll(),
   });
-  const categories = categoriesData || [];
+  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
 
   const { data: citiesData } = useQuery({
     queryKey: ['cities'],
     queryFn: () => api.cities.getAll(),
   });
-  const cities = citiesData || [];
+  const cities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
 
   const submitMutation = useMutation({
     mutationFn: () => api.expertQuote.create({

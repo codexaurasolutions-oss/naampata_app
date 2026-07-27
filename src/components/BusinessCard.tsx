@@ -12,8 +12,29 @@ export default function BusinessCard({ business, onPress, onSave }: BusinessCard
   const coverImage = business.coverImageUrl || business.coverImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop';
   const logo = business.logoUrl || business.logo || 'https://via.placeholder.com/150';
   const title = business.title || business.name || 'Business Name';
-  const rating = business.averageRating || business.rating ? Number(business.averageRating || business.rating).toFixed(1) : '4.8';
+  const rating = business.averageRating || business.rating ? Number(business.averageRating || business.rating).toFixed(1) : '-';
   const reviewsCount = business.totalReviews || business.reviews?.length || business.reviewCount || 0;
+
+  const getIsOpen = (): boolean => {
+    if (business.isOpen !== undefined) return business.isOpen;
+    const hours = business.businessHours || business.operationalHours;
+    if (!hours || typeof hours !== 'object') return false;
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = days[new Date().getDay()];
+    const todayHours = hours[today];
+    if (!todayHours || !todayHours.isOpen) return false;
+    try {
+      const now = new Date();
+      const [openH, openM] = todayHours.openTime?.replace(/AM|PM/gi, '').trim().split(':').map(Number) || [];
+      const [closeH, closeM] = todayHours.closeTime?.replace(/AM|PM/gi, '').trim().split(':').map(Number) || [];
+      if (openH === undefined || closeH === undefined) return false;
+      const openMinutes = openH * 60 + (openM || 0);
+      const closeMinutes = closeH * 60 + (closeM || 0);
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      return nowMinutes >= openMinutes && nowMinutes <= closeMinutes;
+    } catch { return false; }
+  };
+  const isOpen = getIsOpen();
 
   let addressText = 'No location specified';
   if (business.city || business.state) {
@@ -37,9 +58,9 @@ export default function BusinessCard({ business, onPress, onSave }: BusinessCard
         />
         <View className="absolute inset-0 bg-black/20" />
         <View className="absolute top-4 left-4 right-4 flex-row justify-between items-start">
-          <View className="bg-green-500/90 backdrop-blur-md px-3 py-1 rounded-full flex-row items-center border border-white/20">
-            <View className="w-1.5 h-1.5 bg-white rounded-full mr-1.5" />
-            <Text className="text-white font-black text-[10px] uppercase tracking-widest">Open Now</Text>
+          <View className={`px-3 py-1 rounded-full flex-row items-center border border-white/20 ${isOpen ? 'bg-green-500/90' : 'bg-red-500/90'}`}>
+            <View className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isOpen ? 'bg-white' : 'bg-white'}`} />
+            <Text className="text-white font-black text-[10px] uppercase tracking-widest">{isOpen ? 'Open Now' : 'Closed'}</Text>
           </View>
           <TouchableOpacity
             onPress={onSave}

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 
 export default function EditListingScreen({ route, navigation }: any) {
-  const { listingId } = route.params;
+  const { listingId } = route.params || {};
   const queryClient = useQueryClient();
 
   const { data, isLoading: loadingData } = useQuery({
@@ -58,6 +58,18 @@ export default function EditListingScreen({ route, navigation }: any) {
       contactPhone, contactEmail, website, whatsapp,
     });
   };
+
+  if (!listingId) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="error-outline" size={48} color="#94A3B8" />
+        <Text style={{ color: '#64748B', marginTop: 12, fontSize: 16 }}>Listing not found</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+          <Text style={{ color: '#FF7A30', fontWeight: '700' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (loadingData) {
     return (

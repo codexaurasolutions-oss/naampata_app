@@ -5,15 +5,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 
 export default function LeadDetailsScreen({ route, navigation }: any) {
-  const { lead } = route.params;
+  const { lead } = route.params || {};
   const queryClient = useQueryClient();
   const [noteInput, setNoteInput] = useState('');
   const [replyInput, setReplyInput] = useState('');
   const [showReply, setShowReply] = useState(false);
 
   const { data: notesData, isLoading: loadingNotes } = useQuery({
-    queryKey: ['leadNotes', lead.id],
+    queryKey: ['leadNotes', lead?.id],
     queryFn: () => api.leads.getNotes(lead.id),
+    enabled: !!lead?.id,
   });
 
   const addNoteMutation = useMutation({
@@ -21,7 +22,8 @@ export default function LeadDetailsScreen({ route, navigation }: any) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leadNotes', lead.id] });
       setNoteInput('');
-    }
+    },
+    onError: () => Alert.alert('Error', 'Failed to add note.'),
   });
 
   const updateStatusMutation = useMutation({
@@ -29,7 +31,8 @@ export default function LeadDetailsScreen({ route, navigation }: any) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendorLeads'] });
       queryClient.invalidateQueries({ queryKey: ['vendorLeadStats'] });
-    }
+    },
+    onError: () => Alert.alert('Error', 'Failed to update status.'),
   });
 
   const replyMutation = useMutation({
@@ -42,6 +45,18 @@ export default function LeadDetailsScreen({ route, navigation }: any) {
     },
     onError: () => Alert.alert('Error', 'Failed to send reply.'),
   });
+
+  if (!lead) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="error-outline" size={48} color="#94A3B8" />
+        <Text style={{ color: '#64748B', marginTop: 12, fontSize: 16 }}>Lead not found</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+          <Text style={{ color: '#FF7A30', fontWeight: '700' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const notes = notesData || [];
 

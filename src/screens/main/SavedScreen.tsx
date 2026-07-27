@@ -194,7 +194,7 @@ export default function SavedScreen({ navigation }: any) {
               {activeTab === 'businesses'
                 ? "You haven't saved any businesses yet."
                 : activeTab === 'offers'
-                  ? "You haven't clipped any offers or deals yet."
+                  ? "You haven't saved any offers or events yet."
                   : "You haven't saved any events yet."}
             </Text>
           </View>

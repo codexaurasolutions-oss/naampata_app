@@ -38,7 +38,7 @@ const SOCIAL_ICONS: Record<string, { icon: string; color: string }> = {
 };
 
 export default function BusinessDetailScreen({ route, navigation }: any) {
-  const { id, slug } = route.params;
+  const { id, slug } = route.params || {};
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'qa' | 'offers' | 'faqs'>('about');
@@ -74,6 +74,15 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   const followMutation = useMutation({
     mutationFn: () => followData?.isFollowing ? api.follows.unfollow(id) : api.follows.follow(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['followCheck', id] }); queryClient.invalidateQueries({ queryKey: ['followerCount', id] }); },
+  });
+
+  const { data: savedCheckData } = useQuery({ queryKey: ['savedCheck', id], queryFn: () => api.users.getFavorites(), enabled: isAuthenticated && !!id });
+  const isSaved = savedCheckData?.data?.some((f: any) => f.businessId === id || f.id === id) || false;
+
+  const saveMutation = useMutation({
+    mutationFn: () => isSaved ? api.users.removeFavorite(id) : api.users.addFavorite(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['savedCheck', id] }); Alert.alert(isSaved ? 'Removed' : 'Saved', isSaved ? 'Removed from saved.' : 'Business saved to favorites!'); },
+    onError: () => Alert.alert('Error', 'Failed to save.'),
   });
 
   const askQuestionMutation = useMutation({
@@ -299,7 +308,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             </TouchableOpacity>
             <TouchableOpacity style={s.actionBtn} onPress={() => requireAuth(() => {
               if (business.vendor?.id) {
-                navigation.navigate('Chat', { vendorId: business.vendor.id, businessName });
+                navigation.navigate('Dashboard', { screen: 'Chat', params: { vendorId: business.vendor.id, businessName: business.title || business.name || '' } });
               } else {
                 Alert.alert('Chat', 'Chat is not available for this business.');
               }
@@ -446,8 +455,8 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                   <TouchableOpacity
                     style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 24, flexDirection: 'row', alignItems: 'center', gap: 12 }}
                     onPress={() => {
-                      if (business.vendor?.id) {
-                        navigation.navigate('VendorProfile', { vendorId: business.vendor.id });
+                      if (business.vendor?.businessName) {
+                        navigation.navigate('SearchResults', { query: business.vendor.businessName });
                       }
                     }}
                   >
@@ -668,11 +677,8 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         <TouchableOpacity style={s.followBtn} onPress={() => requireAuth(() => followMutation.mutate())}>
           <Icon name={isFollowing ? 'favorite' : 'favorite-border'} size={24} color={isFollowing ? '#FF7A30' : '#64748B'} />
         </TouchableOpacity>
-        <TouchableOpacity style={s.followBtn} onPress={() => requireAuth(() => {
-          const name = business.title || business.name || 'this business';
-          Share.share({ message: `Check out ${name} on NAAMPATA!\nhttps://naampata.com/business/${business.slug || business.id}` });
-        })}>
-          <Icon name="bookmark-border" size={24} color="#64748B" />
+        <TouchableOpacity style={s.followBtn} onPress={() => requireAuth(() => saveMutation.mutate())}>
+          <Icon name={isSaved ? 'favorite' : 'favorite-border'} size={24} color={isSaved ? '#FF7A30' : '#64748B'} />
         </TouchableOpacity>
         <TouchableOpacity style={s.contactBtn} onPress={() => requireAuth(() => { if (contactPhone) Linking.openURL(`tel:${contactPhone}`); })}>
           <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 17 }}>Contact Now</Text>

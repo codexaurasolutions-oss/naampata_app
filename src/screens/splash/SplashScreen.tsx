@@ -28,12 +28,7 @@ export default function SplashScreen({ navigation }: any) {
     const initApp = async () => {
       await checkSession();
       setTimeout(() => {
-        const state = useAuthStore.getState();
-        if (state.isAuthenticated && state.token) {
-          navigation.replace('Main');
-        } else {
-          navigation.replace('Auth');
-        }
+        navigation.replace('Main');
       }, 1500);
     };
 

@@ -83,17 +83,21 @@ export default function SettingsScreen({ navigation }: any) {
       includeBase64: false,
     };
 
-    ImagePicker.launchImageLibrary(options, (response) => {
-      if (response.didCancel) {
+    try {
+      const result = await ImagePicker.launchImageLibrary(options);
+      if (result.didCancel) {
         console.log('[ImagePicker] User cancelled');
-      } else if (response.errorCode) {
-        console.error('[ImagePicker] Error:', response.errorMessage);
-        Alert.alert('Error', response.errorMessage || 'Failed to pick image');
-      } else if (response.assets && response.assets[0]) {
-        const asset = response.assets[0];
+      } else if (result.errorCode) {
+        console.error('[ImagePicker] Error:', result.errorMessage);
+        Alert.alert('Error', result.errorMessage || 'Failed to pick image');
+      } else if (result.assets && result.assets[0]) {
+        const asset = result.assets[0];
         if (asset.uri) uploadAvatar(asset.uri);
       }
-    });
+    } catch (e: any) {
+      console.error('[ImagePicker] Launch failed:', e);
+      Alert.alert('Error', 'Failed to open image picker.');
+    }
   };
 
   const uploadAvatar = async (uri: string) => {

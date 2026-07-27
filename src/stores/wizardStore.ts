@@ -54,7 +54,7 @@ const initialFormData: WizardState['formData'] = {
   categoryId: '',
   targetMarket: [],
   address: { country: '', state: '', city: '', street: '', pincode: '' },
-  location: { lat: 37.7749, lng: -122.4194 },
+  location: { lat: 0, lng: 0 },
   contact: { phone: '', whatsapp: '', email: '', website: '' },
   businessHours: {
     Monday: { isOpen: true, openTime: '09:00 AM', closeTime: '05:00 PM' },

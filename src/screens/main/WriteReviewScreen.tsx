@@ -6,7 +6,7 @@ import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 
 export default function WriteReviewScreen({ route, navigation }: any) {
-  const { businessId, businessName } = route.params;
+  const { businessId, businessName } = route.params || {};
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   
@@ -25,6 +25,18 @@ export default function WriteReviewScreen({ route, navigation }: any) {
       Alert.alert('Error', err.response?.data?.message || 'Failed to submit review. Have you already reviewed this business?');
     }
   });
+
+  if (!businessId) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="error-outline" size={48} color="#94A3B8" />
+        <Text style={{ color: '#64748B', marginTop: 12, fontSize: 16 }}>Business not found</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+          <Text style={{ color: '#FF7A30', fontWeight: '700' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const handleSubmit = () => {
     if (!isAuthenticated) {

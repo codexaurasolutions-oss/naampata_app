@@ -93,10 +93,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await api.auth.googleLogin({ idToken });
       const user = response?.user;
       const accessToken = response?.tokens?.accessToken || response?.token;
+      const rToken = response?.tokens?.refreshToken;
       if (!accessToken) throw new Error('No token received from server');
       await AsyncStorage.setItem('token', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
+      if (rToken) await AsyncStorage.setItem('refreshToken', rToken);
+      set({ user, token: accessToken, refreshToken: rToken || null, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       const msg = error?.response?.data?.message || error?.message || 'Google login failed';
       set({ isLoading: false, error: msg });
@@ -126,7 +128,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (error: any) {
       console.error('Profile sync failed', error);
-      get().logout();
+      if (error?.response?.status === 401) {
+        get().logout();
+      }
     }
   },
 
@@ -141,7 +145,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: JSON.parse(storedUser),
           isAuthenticated: true,
         });
-        get().syncProfile();
+        try {
+          await get().syncProfile();
+        } catch (e) {
+          console.error('Profile sync failed during session check', e);
+        }
       }
     } catch (e) {
       console.error('Session check failed', e);

@@ -65,6 +65,7 @@ export default function LeadsScreen({ navigation }: any) {
             <TouchableOpacity 
               key={lead.id || index}
               className="bg-white rounded-3xl p-5 mb-4 border border-slate-100 shadow-sm"
+              onPress={() => navigation.navigate('LeadDetails', { lead })}
             >
               <View className="flex-row justify-between items-start mb-3">
                 <View className="flex-row items-center flex-1">

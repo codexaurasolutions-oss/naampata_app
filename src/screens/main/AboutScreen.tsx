@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 export default function AboutScreen({ navigation }: any) {
   const features = [
     { icon: 'search', title: 'Smart Search', description: 'Find businesses by category, location, and ratings instantly.' },
-    { icon: 'local-offer', title: 'Deals & Offers', description: 'Discover exclusive deals and promotions from local businesses.' },
+    { icon: 'local-offer', title: 'Offers & Events', description: 'Discover exclusive offers and promotions from local businesses.' },
     { icon: 'star', title: 'Reviews & Ratings', description: 'Read authentic reviews and share your experiences.' },
     { icon: 'event', title: 'Local Events', description: 'Stay updated on events happening in your community.' },
     { icon: 'notifications', title: 'Broadcast', description: 'Broadcast your needs and get responses from businesses instantly.' },
@@ -58,10 +58,6 @@ export default function AboutScreen({ navigation }: any) {
             <TouchableOpacity className="flex-row items-center mb-4" onPress={() => Linking.openURL('mailto:support@naampata.com')}>
               <Icon name="email" size={20} color="#FF7A30" />
               <Text className="text-slate-700 font-medium ml-3">support@naampata.com</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="flex-row items-center mb-4" onPress={() => Linking.openURL('tel:+1234567890')}>
-              <Icon name="phone" size={20} color="#FF7A30" />
-              <Text className="text-slate-700 font-medium ml-3">+1 (234) 567-890</Text>
             </TouchableOpacity>
             <View className="flex-row items-center">
               <Icon name="location-on" size={20} color="#FF7A30" />

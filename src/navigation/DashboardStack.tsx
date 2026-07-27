@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AuthGuard from '../components/AuthGuard';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import AddListingWizard from '../screens/wizard/AddListingWizard';
 import EditListingScreen from '../screens/dashboard/EditListingScreen';
@@ -20,11 +21,18 @@ import AnalyticsScreen from '../screens/dashboard/AnalyticsScreen';
 import FollowingScreen from '../screens/dashboard/FollowingScreen';
 import CommentsScreen from '../screens/dashboard/CommentsScreen';
 import CustomerNotesScreen from '../screens/dashboard/CustomerNotesScreen';
+import { useNavigation } from '@react-navigation/native';
 
 const Dashboard = createNativeStackNavigator();
 
+function DashboardGuard({ children }: { children: React.ReactNode }) {
+  const navigation = useNavigation();
+  return <AuthGuard navigation={navigation}>{children}</AuthGuard>;
+}
+
 export default function DashboardStack() {
   return (
+    <DashboardGuard>
     <Dashboard.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: '#112D4E' },
@@ -133,5 +141,6 @@ export default function DashboardStack() {
         options={{ headerShown: false }}
       />
     </Dashboard.Navigator>
+    </DashboardGuard>
   );
 }

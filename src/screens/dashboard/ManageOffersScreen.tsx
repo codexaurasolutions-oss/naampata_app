@@ -64,6 +64,7 @@ export default function ManageOffersScreen({ navigation }: any) {
       queryClient.invalidateQueries({ queryKey: ['vendorDeals'] });
       queryClient.invalidateQueries({ queryKey: ['vendorEvents'] });
     },
+    onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to delete.'),
   });
 
   const publishMutation = useMutation({
@@ -74,6 +75,7 @@ export default function ManageOffersScreen({ navigation }: any) {
       queryClient.invalidateQueries({ queryKey: ['vendorDeals'] });
       queryClient.invalidateQueries({ queryKey: ['vendorEvents'] });
     },
+    onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to publish.'),
   });
 
   const resetForm = () => {
@@ -129,7 +131,7 @@ export default function ManageOffersScreen({ navigation }: any) {
           className={`flex-1 py-3 rounded-xl items-center mr-2 border ${activeTab === 'deals' ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
           onPress={() => setActiveTab('deals')}
         >
-          <Text className={`font-bold ${activeTab === 'deals' ? 'text-white' : 'text-slate-600'}`}>Deals</Text>
+          <Text className={`font-bold ${activeTab === 'deals' ? 'text-white' : 'text-slate-600'}`}>Offers</Text>
         </TouchableOpacity>
         <TouchableOpacity
           className={`flex-1 py-3 rounded-xl items-center border ${activeTab === 'events' ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200'}`}
@@ -149,7 +151,7 @@ export default function ManageOffersScreen({ navigation }: any) {
           onPress={() => setShowCreate(true)}
         >
           <Icon name="add" size={22} color="#FFF" />
-          <Text className="text-white font-bold ml-2">Create {activeTab === 'deals' ? 'Deal' : 'Event'}</Text>
+          <Text className="text-white font-bold ml-2">Create {activeTab === 'deals' ? 'Offer' : 'Event'}</Text>
         </TouchableOpacity>
 
         {isLoading ? (
@@ -192,7 +194,7 @@ export default function ManageOffersScreen({ navigation }: any) {
           <View className="items-center justify-center py-20">
             <Icon name="local-offer" size={64} color="#CBD5E1" />
             <Text className="text-xl font-bold text-slate-800 mt-4 mb-2">No {activeTab} yet</Text>
-            <Text className="text-slate-500 text-center px-8">Create your first {activeTab === 'deals' ? 'deal' : 'event'} to attract more customers.</Text>
+            <Text className="text-slate-500 text-center px-8">Create your first {activeTab === 'deals' ? 'offer' : 'event'} to attract more customers.</Text>
           </View>
         )}
         <View className="h-20" />
@@ -204,7 +206,7 @@ export default function ManageOffersScreen({ navigation }: any) {
             <TouchableOpacity onPress={() => { setShowCreate(false); resetForm(); }}>
               <Icon name="close" size={24} color="#112D4E" />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-[#112D4E]">New {activeTab === 'deals' ? 'Deal' : 'Event'}</Text>
+            <Text className="text-xl font-bold text-[#112D4E]">New {activeTab === 'deals' ? 'Offer' : 'Event'}</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -275,7 +277,7 @@ export default function ManageOffersScreen({ navigation }: any) {
               {(createDealMutation.isPending || createEventMutation.isPending) ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text className="text-white font-bold text-lg">Create {activeTab === 'deals' ? 'Deal' : 'Event'}</Text>
+                <Text className="text-white font-bold text-lg">Create {activeTab === 'deals' ? 'Offer' : 'Event'}</Text>
               )}
             </TouchableOpacity>
           </ScrollView>

@@ -7,19 +7,19 @@ import { useAuthStore } from '../../stores/authStore';
 import { useSocket } from '../../providers/SocketProvider';
 
 export default function ChatScreen({ route, navigation }: any) {
-  const { conversationId, title } = route.params;
+  const { conversationId, title } = route.params || {};
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const scrollViewRef = useRef<ScrollView>(null);
-  const { socket, isConnected, sendMessage, markAsRead, joinConversation, leaveConversation } = useSocket();
-  
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
 
-  // Fetch initial messages
+  const { socket, isConnected, sendMessage, markAsRead, joinConversation, leaveConversation } = useSocket();
+
   const { data: initialData, isLoading } = useQuery({
     queryKey: ['chatMessages', conversationId],
     queryFn: (): Promise<any> => api.chat.getMessages(conversationId),
+    enabled: !!conversationId,
   });
 
   useEffect(() => {
@@ -41,6 +41,18 @@ export default function ChatScreen({ route, navigation }: any) {
       queryClient.invalidateQueries({ queryKey: ['chatConversations'] });
     }
   });
+
+  if (!conversationId) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="error-outline" size={48} color="#94A3B8" />
+        <Text style={{ color: '#64748B', marginTop: 12, fontSize: 16 }}>Conversation not found</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+          <Text style={{ color: '#FF7A30', fontWeight: '700' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Join conversation room on mount
   useEffect(() => {

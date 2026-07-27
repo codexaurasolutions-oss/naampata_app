@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Modal, SafeAreaView, Alert, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import BusinessCard from '../../components/BusinessCard';
 import { useAuthStore } from '../../stores/authStore';
@@ -43,10 +43,17 @@ export default function SearchResultsScreen({ route, navigation }: any) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [sortBy, setSortBy] = useState<SortOption>(route?.params?.sortBy || 'recommended');
   const { isAuthenticated } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const latitude = route?.params?.latitude;
   const longitude = route?.params?.longitude;
   const hasLocation = !!latitude && !!longitude;
+
+  const saveMutation = useMutation({
+    mutationFn: (businessId: string) => api.users.addFavorite(businessId),
+    onSuccess: () => { Alert.alert('Saved', 'Business saved to favorites!'); },
+    onError: () => Alert.alert('Error', 'Failed to save.'),
+  });
 
   const handleSave = (biz: any) => {
     if (!isAuthenticated) {
@@ -56,6 +63,7 @@ export default function SearchResultsScreen({ route, navigation }: any) {
       ]);
       return;
     }
+    saveMutation.mutate(biz.id || biz._id);
   };
 
   const { data: categoriesData } = useQuery({ queryKey: ['categories'], queryFn: () => api.categories.getAll() });
@@ -250,7 +258,7 @@ export default function SearchResultsScreen({ route, navigation }: any) {
             {hasLocation && (
               <View style={styles.activeChip}>
                 <Text style={styles.activeChipText}>{selectedRadius}km</Text>
-                <TouchableOpacity onPress={() => {}}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Search')}><Icon name="close" size={14} color="#FF7A30" /></TouchableOpacity>
               </View>
             )}
           </View>

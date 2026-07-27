@@ -55,7 +55,7 @@ export default function OffersScreen({ navigation }: any) {
 
   const tabs: { key: TabType; label: string; icon: string }[] = [
     { key: 'all', label: 'All', icon: 'apps' },
-    { key: 'deals', label: 'Deals', icon: 'local-offer' },
+    { key: 'deals', label: 'Offers', icon: 'local-offer' },
     { key: 'events', label: 'Events', icon: 'event' },
   ];
 
@@ -65,7 +65,7 @@ export default function OffersScreen({ navigation }: any) {
         <View className="flex-row justify-between items-center">
           <View>
             <Text className="text-3xl font-bold text-[#112D4E] mb-2">Offers & Events</Text>
-            <Text className="text-slate-500 text-base">Discover the latest deals and happenings near you.</Text>
+            <Text className="text-slate-500 text-base">Discover the latest offers and happenings near you.</Text>
           </View>
           <TouchableOpacity
             className={`w-10 h-10 rounded-full items-center justify-center border ${selectedCity ? 'bg-[#FF7A30] border-[#FF7A30]' : 'bg-white border-slate-200'}`}
@@ -179,7 +179,7 @@ export default function OffersScreen({ navigation }: any) {
           <View className="items-center justify-center py-20">
             <Icon name="local-offer" size={64} color="#E2E8F0" />
             <Text className="text-slate-400 mt-4 text-center px-8">
-              {activeTab === 'deals' ? 'No deals available right now.' : activeTab === 'events' ? 'No events happening right now.' : 'No offers or events yet.'}
+              {activeTab === 'deals' ? 'No offers available right now.' : activeTab === 'events' ? 'No events happening right now.' : 'No offers or events yet.'}
             </Text>
           </View>
         )}

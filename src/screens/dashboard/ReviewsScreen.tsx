@@ -126,7 +126,7 @@ export default function ReviewsScreen({ navigation }: any) {
                   </View>
                   <View className="flex-row bg-orange-50 px-2 py-1 rounded-full items-center border border-orange-100">
                     <Icon name="star" size={14} color="#FBBF24" />
-                    <Text className="font-bold text-orange-600 ml-1 text-xs">{review.rating}.0</Text>
+                    <Text className="font-bold text-orange-600 ml-1 text-xs">{Number(review.rating).toFixed(1)}</Text>
                   </View>
                 </View>
 

@@ -43,7 +43,7 @@ export default function EventsScreen({ navigation }: any) {
           </TouchableOpacity>
           <Text className="text-2xl font-black text-[#112D4E]">Local Events</Text>
         </View>
-        <TouchableOpacity className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100">
+        <TouchableOpacity onPress={() => navigation.navigate('Search')} className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100">
           <Icon name="search" size={20} color="#64748B" />
         </TouchableOpacity>
       </View>

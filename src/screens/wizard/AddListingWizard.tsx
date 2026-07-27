@@ -42,17 +42,46 @@ export default function AddListingWizard({ navigation }: any) {
     return result;
   };
 
+  const COUNTRY_PHONE_CODES: Record<string, string> = {
+    'pakistan': '+92', 'pk': '+92',
+    'india': '+91', 'in': '+91',
+    'united states': '+1', 'us': '+1', 'usa': '+1',
+    'united kingdom': '+44', 'uk': '+44', 'gb': '+44',
+    'uae': '+971', 'united arab emirates': '+971', 'ae': '+971',
+    'saudi arabia': '+966', 'sa': '+966',
+    'canada': '+1', 'ca': '+1',
+    'australia': '+61', 'au': '+61',
+    'china': '+86', 'cn': '+86',
+    'japan': '+81', 'jp': '+81',
+    'germany': '+49', 'de': '+49',
+    'france': '+33', 'fr': '+33',
+    'turkey': '+90', 'tr': '+90',
+    'bangladesh': '+880', 'bd': '+880',
+    'malaysia': '+60', 'my': '+60',
+    'singapore': '+65', 'sg': '+65',
+    'qatar': '+974', 'qa': '+974',
+    'kuwait': '+965', 'kw': '+965',
+    'oman': '+968', 'om': '+968',
+    'bahrain': '+973', 'bh': '+973',
+  };
+
   const toE164 = (phoneCode: string, phone: string) => {
     const cleaned = phone.replace(/[^\d]/g, '');
     const code = phoneCode.replace(/[^\d]/g, '');
     return `+${code}${cleaned}`;
   };
 
+  const getPhoneCode = () => {
+    const country = (formData.address.country || '').toLowerCase().trim();
+    return COUNTRY_PHONE_CODES[country] || '+92';
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const phone = formData.contact.phone ? toE164('+92', formData.contact.phone) : '';
-      const whatsapp = formData.contact.whatsapp ? toE164('+92', formData.contact.whatsapp) : undefined;
+      const phoneCode = getPhoneCode();
+      const phone = formData.contact.phone ? toE164(phoneCode, formData.contact.phone) : '';
+      const whatsapp = formData.contact.whatsapp ? toE164(phoneCode, formData.contact.whatsapp) : undefined;
 
       const submissionData: any = {
         title: formData.name.trim(),

@@ -55,8 +55,20 @@ export default function RegisterScreen({ navigation, route }: any) {
       Alert.alert('Error', 'Please enter your phone number.');
       return;
     }
+    if (!/^[0-9]+$/.test(phone.trim())) {
+      Alert.alert('Error', 'Phone number must contain only digits.');
+      return;
+    }
+    if (phone.trim().length < 7 || phone.trim().length > 15) {
+      Alert.alert('Error', 'Phone number must be between 7 and 15 digits.');
+      return;
+    }
     if (!email.trim()) {
       Alert.alert('Error', 'Please enter your email address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      Alert.alert('Error', 'Please enter a valid email address.');
       return;
     }
     if (!password) {

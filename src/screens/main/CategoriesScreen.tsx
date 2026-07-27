@@ -58,6 +58,14 @@ export default function CategoriesScreen({ navigation }: any) {
               >
                 <View style={s.categoryIconWrap}>
                   <Icon name={cat.icon || 'category'} size={28} color="#3B82F6" />
+                </View>
+                <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
+                {cat.description ? (
+                  <Text style={s.categoryDesc} numberOfLines={2}>{cat.description}</Text>
+                ) : null}
+                <Text style={s.categoryCount}>{cat.businessCount || cat.businessesCount || 0} listing{(cat.businessCount || cat.businessesCount || 0) !== 1 ? 's' : ''}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
           {filtered.length > showCount && (
             <View style={{ alignItems: 'center', paddingVertical: 16 }}>
@@ -69,14 +77,6 @@ export default function CategoriesScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
           )}
-                <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
-                {cat.description ? (
-                  <Text style={s.categoryDesc} numberOfLines={2}>{cat.description}</Text>
-                ) : null}
-                <Text style={s.categoryCount}>{cat.businessCount || cat.businessesCount || 0} listing{(cat.businessCount || cat.businessesCount || 0) !== 1 ? 's' : ''}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         )}
         <View style={{ height: 80 }} />
       </ScrollView>
