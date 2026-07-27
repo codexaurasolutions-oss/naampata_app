@@ -21,6 +21,7 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -36,22 +37,39 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
+  refreshToken: null,
   isAuthenticated: false,
   isLoading: true,
   error: null,
 
   login: async (credentials) => {
+    console.log('[AUTH] login called with:', credentials.email);
     try {
       set({ isLoading: true, error: null });
       const response = await api.auth.login(credentials);
-      const user = response.user;
-      const accessToken = response.tokens?.accessToken || response.token;
-      if (!accessToken) throw new Error('No token received from server');
+      console.log('[AUTH] login response keys:', Object.keys(response || {}));
+      console.log('[AUTH] login response (truncated):', JSON.stringify(response).substring(0, 300));
+
+      const user = response?.user;
+      const accessToken = response?.tokens?.accessToken || response?.token;
+      const rToken = response?.tokens?.refreshToken;
+
+      if (!accessToken) {
+        const errMsg = 'No token received from server';
+        console.error('[AUTH]', errMsg, 'Full response:', response);
+        set({ isLoading: false, error: errMsg });
+        throw new Error(errMsg);
+      }
+
       await AsyncStorage.setItem('token', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
+      if (rToken) await AsyncStorage.setItem('refreshToken', rToken);
+
+      set({ user, token: accessToken, refreshToken: rToken || null, isAuthenticated: true, isLoading: false });
+      console.log('[AUTH] login success! user:', user?.email, 'role:', user?.role);
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || 'Login failed';
+      const msg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Login failed';
+      console.error('[AUTH] login error:', msg, 'status:', error?.response?.status);
       set({ isLoading: false, error: msg });
       throw error;
     }
@@ -63,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await api.auth.register(userData);
       set({ isLoading: false });
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || 'Registration failed';
+      const msg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Registration failed';
       set({ isLoading: false, error: msg });
       throw error;
     }
@@ -73,14 +91,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.auth.googleLogin({ idToken });
-      const user = response.user;
-      const accessToken = response.tokens?.accessToken || response.token;
+      const user = response?.user;
+      const accessToken = response?.tokens?.accessToken || response?.token;
       if (!accessToken) throw new Error('No token received from server');
       await AsyncStorage.setItem('token', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
       set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || 'Google login failed';
+      const msg = error?.response?.data?.message || error?.message || 'Google login failed';
       set({ isLoading: false, error: msg });
       throw error;
     }
@@ -89,12 +107,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     try {
       await api.auth.logout();
-    } catch (error: any) {
-      console.warn('Backend logout failed', error);
-    }
+    } catch (error: any) {}
     await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('refreshToken');
     await AsyncStorage.removeItem('user');
-    set({ user: null, token: null, isAuthenticated: false });
+    set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
   },
 
   syncProfile: async () => {
