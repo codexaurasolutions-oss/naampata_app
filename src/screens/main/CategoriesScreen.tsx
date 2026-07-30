@@ -49,34 +49,36 @@ export default function CategoriesScreen({ navigation }: any) {
         {isLoading ? (
           <ActivityIndicator color="#FF7A30" style={{ marginVertical: 40 }} />
         ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, justifyContent: 'space-between' }}>
-            {visibleCategories.map((cat: any) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={s.categoryCard}
-                onPress={() => navigation.navigate('Search', { initialQuery: '', category: cat.slug || cat.id })}
-              >
-                <View style={s.categoryIconWrap}>
-                  <Icon name={cat.icon || 'category'} size={28} color="#3B82F6" />
-                </View>
-                <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
-                {cat.description ? (
-                  <Text style={s.categoryDesc} numberOfLines={2}>{cat.description}</Text>
-                ) : null}
-                <Text style={s.categoryCount}>{cat.businessCount || cat.businessesCount || 0} listing{(cat.businessCount || cat.businessesCount || 0) !== 1 ? 's' : ''}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          {filtered.length > showCount && (
-            <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#F8FAFC', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}
-                onPress={() => setShowCount(prev => prev + 20)}
-              >
-                <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More ({filtered.length - showCount} remaining)</Text>
-              </TouchableOpacity>
+          <>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, justifyContent: 'space-between' }}>
+              {visibleCategories.map((cat: any) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={s.categoryCard}
+                  onPress={() => navigation.navigate('Search', { initialQuery: '', category: cat.slug || cat.id })}
+                >
+                  <View style={s.categoryIconWrap}>
+                    <Icon name={cat.icon || 'category'} size={28} color="#3B82F6" />
+                  </View>
+                  <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
+                  {cat.description ? (
+                    <Text style={s.categoryDesc} numberOfLines={2}>{cat.description}</Text>
+                  ) : null}
+                  <Text style={s.categoryCount}>{cat.businessCount || cat.businessesCount || 0} listing{(cat.businessCount || cat.businessesCount || 0) !== 1 ? 's' : ''}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          )}
+            {filtered.length > showCount && (
+              <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+                <TouchableOpacity
+                  style={{ backgroundColor: '#F8FAFC', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}
+                  onPress={() => setShowCount(prev => prev + 20)}
+                >
+                  <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More ({filtered.length - showCount} remaining)</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         )}
         <View style={{ height: 80 }} />
       </ScrollView>
