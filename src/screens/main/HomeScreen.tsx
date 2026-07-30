@@ -4,21 +4,36 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import FadeInView from '../../components/FadeInView';
+import LinearGradient from 'react-native-linear-gradient';
 
 const { width } = Dimensions.get('window');
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop';
-const CATEGORY_ICONS: Record<string, string> = {
-  'restaurant': 'restaurant', 'bakery': 'cake', 'cafe': 'local-cafe', 'automotive': 'directions-car',
-  'education': 'school', 'health': 'local-hospital', 'beauty': 'spa', 'fitness': 'fitness-center',
-  'real-estate': 'home', 'technology': 'computer', 'fashion': 'checkroom', 'grocery': 'shopping-cart',
-  'pets': 'pets', 'travel': 'flight', 'entertainment': 'movie', 'default': 'category',
-};
+
+const CATEGORIES = [
+  { name: 'B2B', iconUrl: 'https://img.icons8.com/color/96/handshake.png', slug: 'b2b' },
+  { name: 'Doctors', iconUrl: 'https://img.icons8.com/color/96/medical-doctor.png', slug: 'doctors' },
+  { name: 'Travel', iconUrl: 'https://img.icons8.com/color/96/airplane-take-off.png', slug: 'travel' },
+  { name: 'Beauty', iconUrl: 'https://img.icons8.com/color/96/cosmetics.png', slug: 'beauty' },
+  { name: 'Education', iconUrl: 'https://img.icons8.com/color/96/graduation-cap.png', slug: 'education' },
+  { name: 'Consultants', iconUrl: 'https://img.icons8.com/color/96/consultation.png', slug: 'consultants' },
+  { name: 'Rent & Hire', iconUrl: 'https://img.icons8.com/color/96/key.png', slug: 'rent-hire' },
+  { name: 'Wedding', iconUrl: 'https://img.icons8.com/color/96/wedding-rings.png', slug: 'wedding' },
+  { name: 'Interiors', iconUrl: 'https://img.icons8.com/color/96/sofa.png', slug: 'interiors' },
+  { name: 'Home Serv.', iconUrl: 'https://img.icons8.com/color/96/broom.png', slug: 'home-services' },
+  { name: 'Repairs', iconUrl: 'https://img.icons8.com/color/96/maintenance.png', slug: 'repairs' },
+  { name: 'Contractors', iconUrl: 'https://img.icons8.com/color/96/worker-male.png', slug: 'contractors' },
+  { name: 'Loans', iconUrl: 'https://img.icons8.com/color/96/money-bag.png', badge: 'INSTANT', slug: 'loans' },
+  { name: 'Real Estate', iconUrl: 'https://img.icons8.com/color/96/house.png', slug: 'real-estate' },
+  { name: 'Jd Xperts', iconUrl: 'https://img.icons8.com/color/96/service.png', badge: 'NEW', slug: 'jd-xperts' },
+];
 
 export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
+  const [featuredPage, setFeaturedPage] = useState(1);
+  const [allFeatured, setAllFeatured] = useState<any[]>([]);
 
   const detectMyLocation = async () => {
     setLocationLoading(true);
@@ -53,29 +68,12 @@ export default function HomeScreen({ navigation }: any) {
       Alert.alert('Error', 'Failed to get location.');
     }
   };
-  const [featuredPage, setFeaturedPage] = useState(1);
-  const [allFeatured, setAllFeatured] = useState<any[]>([]);
 
-  const { data: categoriesData, isLoading: loadingCategories } = useQuery({
-    queryKey: ['categories', 'popular'],
-    queryFn: () => api.categories.getPopular(8),
-  });
   const { data: featuredData, isLoading: loadingBusinesses } = useQuery({
     queryKey: ['businesses', 'featured', featuredPage],
     queryFn: () => api.listings.getFeatured(featuredPage, 6),
   });
-  const { data: citiesData } = useQuery({
-    queryKey: ['cities', 'popular'],
-    queryFn: () => api.cities.getPopular(),
-  });
-  const { data: offersData } = useQuery({
-    queryKey: ['offers', 'home'],
-    queryFn: () => api.offers.searchPublic({ limit: 4 }),
-  });
-  const { data: countriesData } = useQuery({ queryKey: ['countries'], queryFn: () => api.cities.getCountries() });
-  const { data: homeCitiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
 
-  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
   const newFeatured = Array.isArray(featuredData) ? featuredData : (featuredData?.data || featuredData?.businesses || []);
 
   useEffect(() => {
@@ -88,221 +86,157 @@ export default function HomeScreen({ navigation }: any) {
     }
   }, [newFeatured, featuredPage]);
 
-  const featuredBusinesses = allFeatured;
-  const topCities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
-  const latestOffers = Array.isArray(offersData) ? offersData : (offersData?.data || offersData?.offers || []);
-  const countries = Array.isArray(countriesData) ? countriesData : (countriesData?.data || []);
-  const homeCities = Array.isArray(homeCitiesData) ? homeCitiesData : (homeCitiesData?.data || homeCitiesData?.cities || []);
-  const filteredCities = selectedCountry ? homeCities.filter((c: any) => c.country === selectedCountry) : homeCities;
+  const handleSearch = () => {
+    navigation.navigate('Search', { initialQuery: searchQuery, country: selectedCountry, city: selectedCity });
+  };
 
   return (
     <View style={s.container}>
-      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.headerSection}>
-          <FadeInView delay={0} direction="up">
-            <Text style={s.heroTitle}>
-              Discover Local Businesses{'\n'}
-              <Text style={s.heroAccent}>Instantly</Text>
-            </Text>
-            <Text style={s.heroSubtitle}>
-              Search, compare & contact the best services near you — fast and reliable.
-            </Text>
-          </FadeInView>
-
-          <FadeInView delay={150} direction="up" style={{ width: '100%' }}>
-            <View style={s.searchBox}>
-              <View style={s.searchInputRow}>
-                <Icon name="search" size={20} color="#CBD5E1" />
-                <TextInput
-                  placeholder="Search businesses..."
-                  style={s.searchInput}
-                  placeholderTextColor="#CBD5E1"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  onSubmitEditing={() => navigation.navigate('Search', { initialQuery: searchQuery, country: selectedCountry, city: selectedCity })}
-                  returnKeyType="search"
-                />
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 12, paddingTop: 8 }}>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <TouchableOpacity
-                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectedCountry ? '#FF7A30' : '#F8FAFC', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: selectedCountry ? '#FF7A30' : '#E2E8F0', gap: 4 }}
-                    onPress={() => { setSelectedCountry(''); setSelectedCity(''); }}
-                  >
-                    <Icon name="public" size={14} color={selectedCountry ? '#FFF' : '#94A3B8'} />
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: selectedCountry ? '#FFF' : '#64748B' }}>{selectedCountry || 'Country'}</Text>
-                    <Icon name="arrow-drop-down" size={14} color={selectedCountry ? '#FFF' : '#94A3B8'} />
-                  </TouchableOpacity>
-                  {selectedCountry && (
-                    <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectedCity ? '#FF7A30' : '#F8FAFC', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: selectedCity ? '#FF7A30' : '#E2E8F0', gap: 4 }}
-                      onPress={() => setSelectedCity('')}
-                    >
-                      <Icon name="location-city" size={14} color={selectedCity ? '#FFF' : '#94A3B8'} />
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: selectedCity ? '#FFF' : '#64748B' }}>{selectedCity || 'City'}</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </ScrollView>
-              <TouchableOpacity
-                style={s.searchButton}
-                onPress={() => navigation.navigate('Search', { initialQuery: searchQuery, country: selectedCountry, city: selectedCity })}
-              >
-                <Icon name="search" size={20} color="#FFF" />
-                <Text style={s.searchButtonText}>Search</Text>
-              </TouchableOpacity>
+      {/* Header */}
+      <View style={s.header}>
+        <TouchableOpacity style={s.avatarWrap}>
+          <Text style={s.avatarText}>U</Text>
+        </TouchableOpacity>
+        <View style={s.logoWrap}>
+          <Text style={s.logoTextBlue}>Just</Text>
+          <Text style={s.logoTextOrange}>dial</Text>
+        </View>
+        <View style={s.headerIcons}>
+          <TouchableOpacity style={s.iconButton}>
+            <Icon name="bookmark-border" size={26} color="#111" />
+          </TouchableOpacity>
+          <TouchableOpacity style={s.iconButton}>
+            <Icon name="notifications-none" size={26} color="#111" />
+            <View style={s.badge}>
+              <Text style={s.badgeText}>1</Text>
             </View>
-          </FadeInView>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-          <FadeInView delay={200} direction="up" style={{ width: '100%', marginBottom: 24 }}>
-            <TouchableOpacity style={s.detectLocationBtn} onPress={detectMyLocation} disabled={locationLoading}>
-              {locationLoading ? (
-                <ActivityIndicator size="small" color="#FF7A30" />
-              ) : (
-                <Icon name="my-location" size={20} color="#FF7A30" />
-              )}
-              <Text style={s.detectLocationText}>
-                {locationLoading ? 'Detecting Location...' : 'Detect My Location — Find Businesses Near Me'}
-              </Text>
-              <Icon name="chevron-right" size={20} color="#CBD5E1" />
+      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        {/* Search Bar */}
+        <View style={s.searchContainer}>
+          <View style={s.searchBox}>
+            <Icon name="search" size={22} color="#0052cc" />
+            <TextInput
+              style={s.searchInput}
+              placeholder="Packers and Movers"
+              placeholderTextColor="#94A3B8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
+            <TouchableOpacity style={s.searchActionIcon}>
+              <Icon name="center-focus-weak" size={22} color="#64748B" />
             </TouchableOpacity>
-          </FadeInView>
-
-          <View style={{ width: '100%', marginBottom: 32 }}>
-            <FadeInView delay={250} direction="up">
-              <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('Offers')}>
-                <View style={[s.featureIcon, { backgroundColor: '#FFF7ED' }]}>
-                  <Icon name="local-offer" size={32} color="#F97316" />
-                </View>
-                <View style={s.featureTextWrap}>
-                  <Text style={s.featureTitle}>Hot Local Offers</Text>
-                  <Text style={s.featureSubtitle}>Best offers & events near you</Text>
-                </View>
-              </TouchableOpacity>
-            </FadeInView>
-            <FadeInView delay={350} direction="up">
-              <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('Events')}>
-                <View style={[s.featureIcon, { backgroundColor: '#FAF5FF' }]}>
-                  <Icon name="event" size={32} color="#A855F7" />
-                </View>
-                <View style={s.featureTextWrap}>
-                  <Text style={s.featureTitle}>Local Events</Text>
-                  <Text style={s.featureSubtitle}>Discover what's happening near you</Text>
-                </View>
-              </TouchableOpacity>
-            </FadeInView>
-            <FadeInView delay={450} direction="up">
-              <TouchableOpacity style={s.featureCard} onPress={() => navigation.navigate('ExpertQuote')}>
-                <View style={[s.featureIcon, { backgroundColor: '#EFF6FF' }]}>
-                  <Icon name="campaign" size={32} color="#3B82F6" />
-                </View>
-                <View style={s.featureTextWrap}>
-                  <Text style={s.featureTitle}>Get Expert Quotes</Text>
-                  <Text style={s.featureSubtitle}>Post your requirement easily</Text>
-                </View>
-              </TouchableOpacity>
-            </FadeInView>
+            <TouchableOpacity style={s.searchActionIcon}>
+              <Icon name="mic" size={22} color="#64748B" />
+            </TouchableOpacity>
           </View>
-
-          <FadeInView delay={550} direction="up" style={{ width: '100%' }}>
-            <View style={s.trustBox}>
-              <View style={s.trustRow}>
-                <View style={s.trustIconWrap}>
-                  <Icon name="verified-user" size={20} color="#F97316" />
-                </View>
-                <View style={s.trustTextWrap}>
-                  <Text style={s.trustTitle}>LOCAL BUSINESSES</Text>
-                  <Text style={s.trustSubtitle}>Active and reliable listings</Text>
-                </View>
-              </View>
-              <View style={s.trustRow}>
-                <View style={s.trustIconWrap}>
-                  <Icon name="search" size={20} color="#22C55E" />
-                </View>
-                <View style={s.trustTextWrap}>
-                  <Text style={s.trustTitle}>FAST & EASY SEARCH</Text>
-                  <Text style={s.trustSubtitle}>Find what you need instantly</Text>
-                </View>
-              </View>
-              <View style={[s.trustRow, { marginBottom: 0 }]}>
-                <View style={s.trustIconWrap}>
-                  <Icon name="headset-mic" size={20} color="#3B82F6" />
-                </View>
-                <View style={s.trustTextWrap}>
-                  <Text style={s.trustTitle}>LOCAL SUPPORT</Text>
-                  <Text style={s.trustSubtitle}>We're here to help</Text>
-                </View>
-              </View>
-            </View>
-          </FadeInView>
         </View>
 
-        <View style={s.sectionWhite}>
-          <FadeInView delay={100} direction="up">
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>Popular Categories</Text>
-              <View style={s.sectionDivider} />
-            </View>
-          </FadeInView>
-
-          {loadingCategories ? (
-            <ActivityIndicator color="#FF7A30" size="large" style={{ marginVertical: 20 }} />
-          ) : (
-            <View style={s.categoriesGrid}>
-              {categories.slice(0, 8).map((cat: any, idx: number) => {
-                const slug = (cat.slug || cat.name || '').toLowerCase().replace(/[^a-z]/g, '');
-                const iconName = Object.entries(CATEGORY_ICONS).find(([key]) => slug.includes(key))?.[1] || CATEGORY_ICONS.default;
-                return (
-                  <FadeInView key={cat.id || idx} delay={200 + idx * 60} direction="up">
-                    <TouchableOpacity
-                      style={s.categoryItem}
-                      onPress={() => navigation.navigate('Search', { category: cat.slug || cat.name })}
-                    >
-                      <View style={s.categoryIconWrap}>
-                        <Icon name={iconName} size={22} color="#FF7A30" />
-                      </View>
-                      <Text style={s.categoryName} numberOfLines={2}>{cat.name}</Text>
-                      {cat.businessCount > 0 && (
-                        <Text style={s.categoryCount}>{cat.businessCount} listing{cat.businessCount !== 1 ? 's' : ''}</Text>
-                      )}
-                    </TouchableOpacity>
-                  </FadeInView>
-                );
-              })}
-            </View>
-          )}
+        {/* Categories Grid */}
+        <View style={s.categoriesSection}>
+          <View style={s.categoriesGrid}>
+            {CATEGORIES.map((cat, idx) => (
+              <TouchableOpacity key={idx} style={s.categoryItem} onPress={() => navigation.navigate('Search', { category: cat.slug })}>
+                {cat.badge && (
+                  <View style={s.categoryBadge}>
+                    <Text style={s.categoryBadgeText}>{cat.badge}</Text>
+                  </View>
+                )}
+                <View style={s.categoryIconWrap}>
+                  <Image source={{ uri: cat.iconUrl }} style={s.categoryIcon} resizeMode="contain" />
+                </View>
+                <Text style={s.categoryName}>{cat.name}</Text>
+              </TouchableOpacity>
+            ))}
+            
+            {/* Show More */}
+            <TouchableOpacity style={s.categoryItem} onPress={() => navigation.navigate('Categories')}>
+              <View style={[s.categoryIconWrap, { backgroundColor: '#4b6bf5' }]}>
+                <Icon name="keyboard-arrow-down" size={30} color="#FFF" />
+              </View>
+              <Text style={s.categoryName}>Show More</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={s.sectionWhite}>
-          <FadeInView delay={100} direction="up">
-            <View style={s.sectionHeader}>
+        {/* Bottom Sheet Like Section */}
+        <View style={s.bottomSheet}>
+          <View style={s.handle} />
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.promoCardsContainer}>
+            {/* Order Food */}
+            <TouchableOpacity style={[s.promoCard, { borderColor: '#FED7AA', borderWidth: 1 }]} onPress={() => navigation.navigate('Search', { initialQuery: 'food' })}>
+              <Image source={{ uri: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&auto=format&fit=crop' }} style={s.promoImage} />
+              <View style={s.promoGradientOverlay} />
+              <View style={s.promoTextWrap}>
+                <Text style={s.promoTextBig}>ORDER</Text>
+                <Text style={s.promoTextBig}>FOOD</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Gift Cards */}
+            <TouchableOpacity style={[s.promoCard, { backgroundColor: '#5E2CA5' }]} onPress={() => navigation.navigate('Search', { initialQuery: 'gift' })}>
+              <Image source={{ uri: 'https://img.icons8.com/color/96/gift.png' }} style={s.promoIconFloat} />
+              <View style={s.promoTextWrapBottom}>
+                <Text style={s.promoTextBig}>GIFT</Text>
+                <Text style={s.promoTextBig}>CARDS</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Shopping */}
+            <TouchableOpacity style={[s.promoCard, { backgroundColor: '#1F8D98' }]} onPress={() => navigation.navigate('Search', { initialQuery: 'shopping' })}>
+              <Image source={{ uri: 'https://img.icons8.com/color/96/shopping-bag--v1.png' }} style={s.promoIconFloatSmall} />
+              <View style={s.promoTextWrapBottom}>
+                <Text style={s.promoTextBig}>SHOPPING</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Pay Bills */}
+            <TouchableOpacity style={[s.promoCard, { backgroundColor: '#152B6A' }]} onPress={() => navigation.navigate('Search', { initialQuery: 'bills' })}>
+              <View style={s.promoBIconWrap}>
+                <Text style={s.promoBIcon}>B</Text>
+              </View>
+              <View style={s.promoTextWrapBottom}>
+                <Text style={[s.promoTextBig, { textAlign: 'center' }]}>PAY BILLS</Text>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Banner */}
+          <TouchableOpacity style={s.banner}>
+            <View style={s.bannerLeft}>
+              <Text style={s.bannerTitle}>Propel your career towards growth</Text>
+              <Text style={s.bannerSubtitle}>Connect with Career Experts</Text>
+              <View style={s.bannerBtn}>
+                <Text style={s.bannerBtnText}>Enquire Now</Text>
+              </View>
+            </View>
+            <View style={s.bannerRight}>
+              <Image source={{ uri: 'https://img.icons8.com/color/96/bullseye.png' }} style={s.bannerIcon} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Featured Businesses Section (to keep the old logic active) */}
+          {allFeatured.length > 0 && (
+            <View style={s.featuredSection}>
               <Text style={s.sectionTitle}>Featured Businesses</Text>
-              <View style={s.sectionDivider} />
-            </View>
-          </FadeInView>
-
-          {loadingBusinesses ? (
-            <ActivityIndicator color="#FF7A30" size="large" style={{ marginVertical: 20 }} />
-          ) : featuredBusinesses.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingVertical: 30 }}>
-              <Icon name="business-center" size={48} color="#E2E8F0" />
-              <Text style={{ color: '#94A3B8', marginTop: 12, fontSize: 14 }}>No featured businesses yet</Text>
-            </View>
-          ) : (
-            featuredBusinesses.map((biz: any, index: number) => {
-              const img = biz.coverImageUrl || biz.coverImage || biz.logoUrl || FALLBACK_IMG;
-              return (
-                <FadeInView key={biz.id || index} delay={200 + index * 80} direction="up">
+              {allFeatured.map((biz: any, index: number) => {
+                const img = biz.coverImageUrl || biz.coverImage || biz.logoUrl || FALLBACK_IMG;
+                return (
                   <TouchableOpacity
+                    key={biz.id || index}
                     style={s.businessCard}
                     onPress={() => navigation.navigate('BusinessDetail', { id: biz.id, slug: biz.slug })}
                   >
-                    <Image
-                      source={{ uri: img }}
-                      style={s.businessImage}
-                    />
+                    <Image source={{ uri: img }} style={s.businessImage} />
                     <View style={s.businessInfo}>
-                      <Text style={s.businessCategory}>{biz.category?.name || ''}</Text>
+                      <Text style={s.businessCategory}>{biz.category?.name || 'Local Business'}</Text>
                       <Text style={s.businessName} numberOfLines={1}>{biz.title || biz.name || 'Business'}</Text>
                       <View style={s.ratingRow}>
                         <Icon name="star" size={16} color="#F59E0B" />
@@ -310,152 +244,15 @@ export default function HomeScreen({ navigation }: any) {
                       </View>
                       <View style={s.locationRow}>
                         <Icon name="location-on" size={14} color="#94A3B8" />
-                        <Text style={s.locationText} numberOfLines={1}>
-                          {biz.city || biz.address?.city || ''}
-                        </Text>
+                        <Text style={s.locationText} numberOfLines={1}>{biz.city || biz.address?.city || ''}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
-                </FadeInView>
-              );
-            })
+                );
+              })}
+            </View>
           )}
-          {newFeatured.length >= 6 && !loadingBusinesses && (
-            <TouchableOpacity
-              style={{ backgroundColor: '#F8FAFC', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0', marginTop: 8 }}
-              onPress={() => {
-                const nextPage = featuredPage + 1;
-                setFeaturedPage(nextPage);
-              }}
-            >
-              <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More</Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
-        {topCities.length > 0 && (
-          <View style={s.sectionWhite}>
-            <FadeInView delay={100} direction="up">
-              <View style={s.sectionHeader}>
-                <Text style={s.sectionTitle}>Top Cities</Text>
-                <View style={s.sectionDivider} />
-              </View>
-            </FadeInView>
-            <View style={s.citiesGrid}>
-              {topCities.slice(0, 6).map((city: any, idx: number) => (
-                <FadeInView key={city.id || idx} delay={200 + idx * 60} direction="up">
-                  <TouchableOpacity
-                    style={s.cityCard}
-                    onPress={() => navigation.navigate('Search', { city: city.name, country: city.country })}
-                  >
-                    <View style={[s.cityIconWrap, { backgroundColor: idx % 2 === 0 ? '#FFF7ED' : '#EFF6FF' }]}>
-                      <Icon name="location-city" size={24} color={idx % 2 === 0 ? '#FF7A30' : '#3B82F6'} />
-                    </View>
-                    <Text style={s.cityName} numberOfLines={1}>{city.name}</Text>
-                    <Text style={s.cityCountry} numberOfLines={1}>{city.country}</Text>
-                  </TouchableOpacity>
-                </FadeInView>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {latestOffers.length > 0 && (
-          <View style={s.sectionWhite}>
-            <FadeInView delay={100} direction="up">
-              <View style={s.sectionHeader}>
-                <Text style={s.sectionTitle}>Latest Offers</Text>
-                <View style={s.sectionDivider} />
-              </View>
-            </FadeInView>
-            <View style={s.offersGrid}>
-              {latestOffers.map((offer: any, idx: number) => (
-                <FadeInView key={offer.id || idx} delay={200 + idx * 80} direction="up">
-                  <TouchableOpacity
-                    style={s.offerCard}
-                    onPress={() => navigation.navigate('Offers')}
-                  >
-                    {offer.imageUrl && (
-                      <Image source={{ uri: offer.imageUrl }} style={s.offerImage} />
-                    )}
-                    <View style={s.offerInfo}>
-                      <Text style={s.offerTitle} numberOfLines={1}>{offer.title || offer.name || 'Deal'}</Text>
-                      {offer.discount && <Text style={s.offerDiscount}>{offer.discount}</Text>}
-                    </View>
-                  </TouchableOpacity>
-                </FadeInView>
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View style={[s.sectionWhite, { paddingBottom: 40 }]}>
-          <FadeInView delay={100} direction="up">
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>How It Works</Text>
-              <View style={s.sectionDivider} />
-            </View>
-          </FadeInView>
-          <FadeInView delay={200} direction="up">
-            <View style={s.howItem}>
-              <View style={s.howIconWrap}>
-                <Icon name="search" size={24} color="#FF7A30" />
-              </View>
-              <Text style={s.howTitle}>Search & Find</Text>
-              <Text style={s.howSubtitle}>Choose the service you need from our top categories.</Text>
-            </View>
-          </FadeInView>
-          <FadeInView delay={300} direction="up">
-            <View style={s.howItem}>
-              <View style={s.howIconWrap}>
-                <Icon name="favorite" size={24} color="#FF7A30" />
-              </View>
-              <Text style={s.howTitle}>Compare & Review</Text>
-              <Text style={s.howSubtitle}>Read reviews & select the best local providers.</Text>
-            </View>
-          </FadeInView>
-          <FadeInView delay={400} direction="up">
-            <View style={s.howItem}>
-              <View style={s.howIconWrap}>
-                <Icon name="phone" size={24} color="#FF7A30" />
-              </View>
-              <Text style={s.howTitle}>Contact & Connect</Text>
-              <Text style={s.howSubtitle}>Reach out directly to your chosen business in seconds.</Text>
-            </View>
-          </FadeInView>
-        </View>
-
-        <View style={s.sectionWhite}>
-          <FadeInView delay={100} direction="up">
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>What People Say</Text>
-              <View style={s.sectionDivider} />
-            </View>
-          </FadeInView>
-          {[
-            { name: 'Ahmed K.', text: 'Found a great electrician in minutes. Very reliable platform!', rating: 5 },
-            { name: 'Sara M.', text: 'Best local business directory in Pakistan. Love the reviews feature.', rating: 5 },
-            { name: 'Usman R.', text: 'Listed my business and got 10x more customers. Highly recommended!', rating: 5 },
-          ].map((t, idx) => (
-            <FadeInView key={idx} delay={200 + idx * 100} direction="up">
-              <View style={s.testimonialCard}>
-                <View style={s.testimonialStars}>{[1,2,3,4,5].map(s => <Icon key={s} name="star" size={14} color="#F59E0B" />)}</View>
-                <Text style={s.testimonialText}>"{t.text}"</Text>
-                <Text style={s.testimonialName}>— {t.name}</Text>
-              </View>
-            </FadeInView>
-          ))}
-        </View>
-
-        <View style={{ backgroundColor: '#112D4E', marginHorizontal: 16, borderRadius: 24, padding: 32, marginBottom: 40, alignItems: 'center' }}>
-          <FadeInView delay={100} direction="up">
-            <Icon name="business-center" size={48} color="#FF7A30" />
-            <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '900', textAlign: 'center', marginTop: 16, marginBottom: 8 }}>Own a Business?</Text>
-            <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginBottom: 20, lineHeight: 20 }}>List your business for free and reach thousands of customers in your area.</Text>
-            <TouchableOpacity style={{ backgroundColor: '#FF7A30', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14 }} onPress={() => navigation.navigate('Auth', { screen: 'Register' })}>
-              <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 16 }}>Sign Up Free</Text>
-            </TouchableOpacity>
-          </FadeInView>
         </View>
       </ScrollView>
     </View>
@@ -463,65 +260,125 @@ export default function HomeScreen({ navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FDFCFB' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { flex: 1 },
-  headerSection: { paddingTop: 80, paddingBottom: 48, paddingHorizontal: 16, alignItems: 'center' },
-  heroTitle: { fontSize: 34, fontWeight: '900', color: '#112D4E', textAlign: 'center', marginBottom: 16, lineHeight: 42 },
-  heroAccent: { color: '#FF7A30' },
-  heroSubtitle: { fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 32, fontWeight: '500', paddingHorizontal: 16 },
-  searchBox: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 32, overflow: 'hidden' },
-  searchInputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F9FAFB' },
-  searchInput: { flex: 1, marginLeft: 12, height: 40, color: '#1E293B', fontWeight: '500', fontSize: 15 },
-  searchButton: { backgroundColor: '#FF7A30', paddingVertical: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
-  searchButtonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 17, marginLeft: 8 },
-  featureCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24, flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#F9FAFB' },
-  featureIcon: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  featureTextWrap: { marginLeft: 16, flex: 1 },
-  featureTitle: { fontWeight: '900', color: '#112D4E', fontSize: 20, marginBottom: 4 },
-  featureSubtitle: { color: '#94A3B8', fontWeight: '500', fontSize: 14 },
-  trustBox: { width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 24, borderWidth: 1, borderColor: '#F3F4F6', padding: 16 },
-  trustRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  trustIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F9FAFB' },
-  trustTextWrap: { marginLeft: 12 },
-  trustTitle: { fontWeight: '700', color: '#112D4E', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
-  trustSubtitle: { color: '#94A3B8', fontSize: 10, fontWeight: '500', marginTop: 2 },
-  sectionWhite: { backgroundColor: '#FFFFFF', paddingVertical: 48, paddingHorizontal: 16 },
-  sectionHeader: { alignItems: 'center', marginBottom: 32 },
-  sectionTitle: { fontSize: 22, fontWeight: '700', color: '#202124', marginBottom: 8 },
-  sectionDivider: { width: 48, height: 4, backgroundColor: '#FF7A30', borderRadius: 2 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  avatarWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  avatarText: { fontSize: 16, fontWeight: 'bold', color: '#64748B' },
+  logoWrap: { flexDirection: 'row', alignItems: 'center' },
+  logoTextBlue: { fontSize: 24, fontWeight: '900', color: '#0052cc' },
+  logoTextOrange: { fontSize: 24, fontWeight: '900', color: '#ff6b00' },
+  headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconButton: { position: 'relative', padding: 4 },
+  badge: {
+    position: 'absolute',
+    top: 2,
+    right: 4,
+    backgroundColor: '#ff6b00',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFF',
+  },
+  badgeText: { color: '#FFF', fontSize: 8, fontWeight: 'bold' },
+  searchContainer: { paddingHorizontal: 16, marginBottom: 20, marginTop: 4 },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchInput: { flex: 1, height: 46, fontSize: 16, color: '#1E293B', marginLeft: 10, fontWeight: '500' },
+  searchActionIcon: { padding: 6, marginLeft: 4 },
+  categoriesSection: { paddingHorizontal: 16, paddingBottom: 24 },
   categoriesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  categoryItem: { width: (width - 64) / 4, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 20, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 16, alignItems: 'center' },
-  categoryIconWrap: { width: 48, height: 48, backgroundColor: '#FFFFFF', borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 8, borderWidth: 1, borderColor: '#F1F5F9' },
-  categoryName: { fontWeight: '700', fontSize: 11, color: '#334155', textAlign: 'center' },
-  categoryCount: { color: '#94A3B8', fontSize: 9, marginTop: 4 },
-  businessCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
-  businessImage: { width: 96, height: 96, borderRadius: 20, backgroundColor: '#E2E8F0' },
+  categoryItem: { width: (width - 40) / 4, alignItems: 'center', marginBottom: 24, position: 'relative' },
+  categoryIconWrap: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  categoryIcon: { width: 36, height: 36 },
+  categoryName: { fontSize: 12, fontWeight: '600', color: '#334155', textAlign: 'center' },
+  categoryBadge: { position: 'absolute', bottom: 20, zIndex: 10, backgroundColor: '#FFF', borderColor: '#EF4444', borderWidth: 1, borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1 },
+  categoryBadgeText: { color: '#EF4444', fontSize: 8, fontWeight: 'bold' },
+  bottomSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
+    minHeight: 500,
+  },
+  handle: { width: 40, height: 5, backgroundColor: '#D1D5DB', borderRadius: 3, alignSelf: 'center', marginBottom: 20 },
+  promoCardsContainer: { paddingHorizontal: 16, gap: 12, paddingBottom: 24 },
+  promoCard: { width: 110, height: 110, borderRadius: 16, overflow: 'hidden', position: 'relative' },
+  promoImage: { width: '100%', height: '100%', position: 'absolute' },
+  promoGradientOverlay: { position: 'absolute', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.3)' },
+  promoTextWrap: { position: 'absolute', bottom: 10, left: 10 },
+  promoTextWrapBottom: { position: 'absolute', bottom: 10, left: 10, right: 10 },
+  promoTextBig: { color: '#FFF', fontSize: 14, fontWeight: '900' },
+  promoIconFloat: { width: 44, height: 44, position: 'absolute', top: 8, right: 8 },
+  promoIconFloatSmall: { width: 40, height: 40, position: 'absolute', top: 8, right: 8 },
+  promoBIconWrap: { position: 'absolute', top: 12, alignSelf: 'center' },
+  promoBIcon: { fontSize: 44, fontWeight: '900', color: '#FF7A30' },
+  banner: {
+    marginHorizontal: 16,
+    backgroundColor: '#2a2c3a',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    height: 120,
+    marginBottom: 32,
+  },
+  bannerLeft: { flex: 1, justifyContent: 'center' },
+  bannerTitle: { color: '#FFF', fontSize: 15, fontWeight: 'bold', marginBottom: 4 },
+  bannerSubtitle: { color: '#CBD5E1', fontSize: 12, marginBottom: 12 },
+  bannerBtn: { backgroundColor: '#a62b3b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4, alignSelf: 'flex-start' },
+  bannerBtnText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
+  bannerRight: { width: 80, justifyContent: 'flex-end', alignItems: 'flex-end' },
+  bannerIcon: { width: 60, height: 60, opacity: 0.8, transform: [{ translateX: 10 }, { translateY: 10 }] },
+  
+  // Featured section styles to prevent undefined errors
+  featuredSection: { paddingHorizontal: 16, paddingBottom: 40 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#112D4E', marginBottom: 16 },
+  businessCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+  businessImage: { width: 80, height: 80, borderRadius: 12, backgroundColor: '#E2E8F0' },
   businessInfo: { flex: 1, marginLeft: 16, justifyContent: 'center' },
-  businessCategory: { color: '#94A3B8', fontSize: 12, fontWeight: '500', marginBottom: 4 },
-  businessName: { fontSize: 17, fontWeight: '700', color: '#112D4E', marginBottom: 6 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  ratingText: { color: '#1E293B', fontWeight: '700', fontSize: 12, marginLeft: 4 },
+  businessCategory: { color: '#94A3B8', fontSize: 12, marginBottom: 4 },
+  businessName: { fontSize: 16, fontWeight: 'bold', color: '#112D4E', marginBottom: 4 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  ratingText: { marginLeft: 4, fontSize: 12, fontWeight: 'bold', color: '#1E293B' },
   locationRow: { flexDirection: 'row', alignItems: 'center' },
-  locationText: { color: '#64748B', fontSize: 12, marginLeft: 4 },
-  citiesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  cityCard: { width: (width - 64) / 3, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 12, alignItems: 'center' },
-  cityIconWrap: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  cityName: { fontWeight: '700', fontSize: 13, color: '#112D4E', textAlign: 'center' },
-  cityCountry: { color: '#94A3B8', fontSize: 10, marginTop: 2, textAlign: 'center' },
-  offersGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  offerCard: { width: (width - 56) / 2, backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 12 },
-  offerImage: { width: '100%', height: 80, backgroundColor: '#F1F5F9' },
-  offerInfo: { padding: 12 },
-  offerTitle: { fontWeight: '700', fontSize: 13, color: '#112D4E', marginBottom: 4 },
-  offerDiscount: { color: '#FF7A30', fontWeight: '800', fontSize: 12 },
-  howItem: { alignItems: 'center', marginBottom: 32 },
-  howIconWrap: { width: 64, height: 64, backgroundColor: '#F9FAFB', borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  howTitle: { fontSize: 18, fontWeight: '700', color: '#202124', marginBottom: 8 },
-  howSubtitle: { color: '#70757A', fontSize: 14, textAlign: 'center', paddingHorizontal: 32 },
-  testimonialCard: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
-  testimonialStars: { flexDirection: 'row', marginBottom: 8, gap: 2 },
-  testimonialText: { color: '#475569', fontSize: 14, lineHeight: 22, marginBottom: 8 },
-  testimonialName: { color: '#94A3B8', fontWeight: '700', fontSize: 13 },
-  detectLocationBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: '#FED7AA', gap: 12 },
-  detectLocationText: { flex: 1, fontWeight: '700', fontSize: 13, color: '#FF7A30' },
+  locationText: { marginLeft: 4, fontSize: 12, color: '#64748B' },
 });
