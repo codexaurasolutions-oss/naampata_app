@@ -13,13 +13,15 @@ export default function BroadcastScreen({ navigation }: any) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [cityId, setCityId] = useState('');
+  const [countryName, setCountryName] = useState('');
   const [budget, setBudget] = useState('');
 
-  const { data: categoriesData } = useQuery({ queryKey: ['categories'], queryFn: () => api.categories.getAll() });
+  const { data: categoriesData } = useQuery({ queryKey: ['categories', 'root'], queryFn: () => api.categories.getRoot() });
   const { data: citiesData } = useQuery({ queryKey: ['cities'], queryFn: () => api.cities.getAll() });
   
   const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || categoriesData?.categories || []);
   const cities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
+  const countries = Array.from(new Set(cities.map((c: any) => c.country))).filter(Boolean);
 
   const broadcastMutation = useMutation({
     mutationFn: (data: any) => api.broadcasts.create(data),
@@ -149,20 +151,42 @@ export default function BroadcastScreen({ navigation }: any) {
             <Text className="text-3xl font-black text-[#0F2747] leading-tight mb-2">Where do you need it?</Text>
             <Text className="text-slate-500 font-medium mb-8">Select the city for this requirement.</Text>
 
-            <View className="flex-row flex-wrap mb-8">
-              {cities.map((city: any) => (
+            <Text className="text-lg font-bold text-slate-800 mb-3">Country</Text>
+            <View className="flex-row flex-wrap mb-6">
+              {countries.map((country: any) => (
                 <TouchableOpacity 
-                  key={city.id}
-                  className={`w-full p-4 rounded-2xl mb-3 border flex-row items-center ${cityId === city.id ? 'bg-[#FF7A30] border-[#FF7A30]' : 'bg-white border-slate-200 shadow-sm'}`}
-                  onPress={() => setCityId(city.id)}
+                  key={country}
+                  className={`w-[48%] p-3 rounded-2xl mb-3 mr-2 border ${countryName === country ? 'bg-[#112D4E] border-[#112D4E]' : 'bg-white border-slate-200 shadow-sm'}`}
+                  onPress={() => { setCountryName(country); setCityId(''); }}
                 >
-                  <Icon name="location-city" size={24} color={cityId === city.id ? "#FFF" : "#64748B"} />
-                  <Text className={`font-bold ml-3 text-lg ${cityId === city.id ? 'text-white' : 'text-slate-700'}`}>
-                    {city.name}
+                  <Text className={`font-bold text-center ${countryName === country ? 'text-white' : 'text-slate-700'}`}>
+                    {country}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
+
+            {countryName ? (
+              <>
+                <Text className="text-lg font-bold text-slate-800 mb-3">City</Text>
+                <View className="flex-row flex-wrap mb-8">
+                  {cities.filter((c: any) => c.country === countryName).map((city: any) => (
+                    <TouchableOpacity 
+                      key={city.id}
+                      className={`w-full p-4 rounded-2xl mb-3 border flex-row items-center ${cityId === city.id ? 'bg-[#FF7A30] border-[#FF7A30]' : 'bg-white border-slate-200 shadow-sm'}`}
+                      onPress={() => setCityId(city.id)}
+                    >
+                      <Icon name="location-city" size={24} color={cityId === city.id ? "#FFF" : "#64748B"} />
+                      <Text className={`font-bold ml-3 text-lg ${cityId === city.id ? 'text-white' : 'text-slate-700'}`}>
+                        {city.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            ) : (
+              <Text className="text-slate-400 italic mb-8">Please select a country first.</Text>
+            )}
           </View>
         )}
 
