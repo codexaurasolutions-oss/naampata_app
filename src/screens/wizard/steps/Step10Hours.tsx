@@ -20,7 +20,7 @@ export default function Step10Hours() {
         ...formData.businessHours,
         [day]: {
           ...formData.businessHours[day],
-          isOpen: !formData.businessHours[day].isOpen
+          isOpen: !(formData.businessHours[day] as any)?.isOpen
         }
       }
     });

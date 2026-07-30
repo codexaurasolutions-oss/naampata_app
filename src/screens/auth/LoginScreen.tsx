@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image, StyleSheet, Keyboard } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuthStore } from '../../stores/authStore';
+import { googleLogin } from '../../hooks/useGoogleAuth';
 
 export default function LoginScreen({ navigation, route }: any) {
   const redirectScreen = route?.params?.redirectScreen;
@@ -9,6 +10,7 @@ export default function LoginScreen({ navigation, route }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const login = useAuthStore((s) => s.login);
@@ -23,11 +25,9 @@ export default function LoginScreen({ navigation, route }: any) {
     }
 
     setLoading(true);
-    console.log('[LOGIN] Attempting login for:', email.trim());
 
     try {
       await login({ email: email.trim(), password });
-      console.log('[LOGIN] Login successful!');
 
       if (redirectScreen) {
         navigation.replace(redirectScreen, redirectParams || {});
@@ -35,9 +35,6 @@ export default function LoginScreen({ navigation, route }: any) {
         navigation.getParent()?.navigate('Main');
       }
     } catch (error: any) {
-      console.log('[LOGIN] Error:', error?.message, 'Status:', error?.response?.status);
-      console.log('[LOGIN] Error data:', JSON.stringify(error?.response?.data));
-
       const status = error.response?.status;
       const msg = error.response?.data?.message || error.response?.data?.error;
 
@@ -134,14 +131,29 @@ export default function LoginScreen({ navigation, route }: any) {
         <View style={styles.socialRow}>
           <TouchableOpacity
             style={styles.googleBtn}
-            onPress={() => Alert.alert('Google Sign-In', 'Google Sign-In will be available soon.')}
-            disabled={loading}
+            onPress={async () => {
+              setGoogleLoading(true);
+              try {
+                await googleLogin();
+              } catch (error) {
+                console.warn('Google login failed:', error);
+              } finally {
+                setGoogleLoading(false);
+              }
+            }}
+            disabled={loading || googleLoading}
             activeOpacity={0.8}
           >
-            <View style={styles.googleIcon}>
-              <Text style={styles.googleIconText}>G</Text>
-            </View>
-            <Text style={styles.googleBtnText}>Continue with Google</Text>
+            {googleLoading ? (
+              <ActivityIndicator color="#4285F4" size="small" />
+            ) : (
+              <>
+                <View style={styles.googleIcon}>
+                  <Text style={styles.googleIconText}>G</Text>
+                </View>
+                <Text style={styles.googleBtnText}>Continue with Google</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 

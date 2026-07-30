@@ -10,6 +10,7 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
   const [respondModalVisible, setRespondModalVisible] = useState(false);
   const [selectedBroadcastId, setSelectedBroadcastId] = useState<string | null>(null);
   const [responseMessage, setResponseMessage] = useState('');
+  const [responsePrice, setResponsePrice] = useState('');
 
   const { data: inboxData, isLoading, refetch } = useQuery({
     queryKey: ['vendorBroadcastInbox'],
@@ -27,13 +28,14 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
       Alert.alert('Sent', 'Your response has been sent!');
       setRespondModalVisible(false);
       setResponseMessage('');
+      setResponsePrice('');
       setSelectedBroadcastId(null);
       queryClient.invalidateQueries({ queryKey: ['vendorBroadcastInbox'] });
     },
     onError: (error: any) => Alert.alert('Error', error.response?.data?.message || 'Failed to respond.'),
   });
 
-  const broadcasts = inboxData || [];
+  const broadcasts = Array.isArray(inboxData) ? inboxData : (inboxData?.data || []);
   const stats = statsData || {};
 
   const onRefresh = async () => {
@@ -45,12 +47,19 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
   const handleRespond = (broadcastId: string) => {
     setSelectedBroadcastId(broadcastId);
     setResponseMessage('');
+    setResponsePrice('');
     setRespondModalVisible(true);
   };
 
   const submitResponse = () => {
     if (!selectedBroadcastId || !responseMessage.trim()) return;
-    respondMutation.mutate({ id: selectedBroadcastId, data: { message: responseMessage.trim() } });
+    respondMutation.mutate({ 
+      id: selectedBroadcastId, 
+      data: { 
+        message: responseMessage.trim(),
+        price: responsePrice ? Number(responsePrice) : undefined,
+      } 
+    });
   };
 
   return (
@@ -102,7 +111,7 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
               key={item.id}
               className="bg-white rounded-2xl p-4 mb-4 border border-slate-100 shadow-sm"
               onPress={() => {
-                if (item.status === 'new') handleRespond(item.id);
+                if (!item.hasResponded && item.status !== 'closed') handleRespond(item.id);
               }}
             >
               <View className="flex-row justify-between items-start mb-2">
@@ -113,8 +122,8 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
                   </Text>
                 </View>
                 {item.status && (
-                  <View className={`px-2 py-1 rounded-full ${item.status === 'new' ? 'bg-blue-100' : item.status === 'responded' ? 'bg-green-100' : 'bg-slate-100'}`}>
-                    <Text className={`text-xs font-bold capitalize ${item.status === 'new' ? 'text-blue-600' : item.status === 'responded' ? 'text-green-600' : 'text-slate-600'}`}>{item.status}</Text>
+                  <View className={`px-2 py-1 rounded-full ${item.hasResponded ? 'bg-green-100' : item.status === 'open' || item.status === 'broadcasted' ? 'bg-blue-100' : 'bg-slate-100'}`}>
+                    <Text className={`text-xs font-bold capitalize ${item.hasResponded ? 'text-green-600' : item.status === 'open' || item.status === 'broadcasted' ? 'text-blue-600' : 'text-slate-600'}`}>{item.hasResponded ? 'Responded' : item.status === 'closed' ? 'Closed' : 'New'}</Text>
                   </View>
                 )}
               </View>
@@ -137,7 +146,7 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
                 ) : null}
               </View>
 
-              {item.status === 'new' && (
+              {!item.hasResponded && item.status !== 'closed' && (
                 <TouchableOpacity
                   className="bg-[#FF7A30] py-3 rounded-xl items-center flex-row justify-center"
                   onPress={() => handleRespond(item.id)}
@@ -147,10 +156,13 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
                 </TouchableOpacity>
               )}
 
-              {item.status === 'responded' && item.response && (
+              {item.hasResponded && item.myResponse && (
                 <View className="bg-green-50 p-3 rounded-xl border border-green-100 mt-2">
                   <Text className="text-green-700 font-bold text-xs mb-1">Your Response:</Text>
-                  <Text className="text-green-600 text-sm">{item.response.message || item.response}</Text>
+                  <Text className="text-green-600 text-sm">{item.myResponse.message}</Text>
+                  {item.myResponse.price != null && (
+                    <Text className="text-green-700 text-xs font-bold mt-1">PKR {item.myResponse.price.toLocaleString()}</Text>
+                  )}
                 </View>
               )}
             </TouchableOpacity>
@@ -170,7 +182,7 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
       <Modal visible={respondModalVisible} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-[#FDFCFB]">
           <View className="bg-white pt-14 pb-4 px-4 shadow-sm flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => { setRespondModalVisible(false); setResponseMessage(''); }}>
+            <TouchableOpacity onPress={() => { setRespondModalVisible(false); setResponseMessage(''); setResponsePrice(''); }}>
               <Icon name="close" size={24} color="#112D4E" />
             </TouchableOpacity>
             <Text className="text-xl font-bold text-[#112D4E]">Respond to Broadcast</Text>
@@ -188,6 +200,16 @@ export default function VendorBroadcastsScreen({ navigation }: any) {
               value={responseMessage}
               onChangeText={setResponseMessage}
               autoFocus
+            />
+
+            <Text className="font-bold text-slate-700 mb-2">Your Price (PKR, optional)</Text>
+            <TextInput
+              className="bg-white border border-slate-200 rounded-2xl p-4 text-slate-900 mb-4"
+              placeholder="e.g. 5000"
+              placeholderTextColor="#94A3B8"
+              keyboardType="numeric"
+              value={responsePrice}
+              onChangeText={setResponsePrice}
             />
 
             <TouchableOpacity

@@ -292,7 +292,7 @@ export const api = {
     getPayouts: () => api.get<any>('/affiliate/payouts'),
     requestPayout: (data: any) => api.post<any>('/affiliate/payouts', data),
     applyReferral: (code: string) => api.post<any>('/affiliate/apply-referral', { code }),
-    trackClick: (code: string) => api.post<any>('/affiliate/track-click', { code }),
+    trackClick: (code: string) => api.post<any>(`/affiliate/track-click?code=${encodeURIComponent(code)}`),
     getSettings: () => api.get<any>('/affiliate/settings'),
   },
 

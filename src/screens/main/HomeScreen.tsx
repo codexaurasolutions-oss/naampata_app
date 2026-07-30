@@ -326,7 +326,6 @@ export default function HomeScreen({ navigation }: any) {
               onPress={() => {
                 const nextPage = featuredPage + 1;
                 setFeaturedPage(nextPage);
-                if (newFeatured.length > 0) setAllFeatured(prev => [...prev, ...newFeatured]);
               }}
             >
               <Text style={{ fontWeight: '700', color: '#FF7A30', fontSize: 14 }}>Load More</Text>

@@ -10,8 +10,9 @@ export default function BroadcastScreen({ navigation }: any) {
 
   const [step, setStep] = useState(1);
   const [categoryId, setCategoryId] = useState('');
-  const [cityId, setCityId] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [cityId, setCityId] = useState('');
   const [budget, setBudget] = useState('');
 
   const { data: categoriesData } = useQuery({ queryKey: ['categories'], queryFn: () => api.categories.getAll() });
@@ -21,12 +22,12 @@ export default function BroadcastScreen({ navigation }: any) {
   const cities = Array.isArray(citiesData) ? citiesData : (citiesData?.data || citiesData?.cities || []);
 
   const broadcastMutation = useMutation({
-    mutationFn: (data: any) => api.expertQuote.create(data), // Using the existing quote API for broadcasts
+    mutationFn: (data: any) => api.broadcasts.create(data),
     onSuccess: () => {
       Alert.alert(
-        "Broadcast Sent! 🚀", 
-        "Your requirement has been instantly sent to top local experts. You will receive quotes shortly.",
-        [{ text: "Awesome", onPress: () => navigation.navigate('Home') }]
+        "Broadcast Sent!", 
+        "Your requirement has been sent to local experts. You will receive quotes shortly.",
+        [{ text: "OK", onPress: () => navigation.navigate('Home') }]
       );
     },
     onError: (err: any) => {
@@ -46,11 +47,11 @@ export default function BroadcastScreen({ navigation }: any) {
     }
 
     broadcastMutation.mutate({
+      title: title || description.substring(0, 50),
       categoryId,
-      cityId,
+      city: cityId || undefined,
       description,
       budget: budget ? Number(budget) : undefined,
-      isBroadcast: true // Flag for backend to route to all relevant vendors
     });
   };
 
@@ -101,6 +102,17 @@ export default function BroadcastScreen({ navigation }: any) {
           <View>
             <Text className="text-3xl font-black text-[#0F2747] leading-tight mb-2">Describe Your Need</Text>
             <Text className="text-slate-500 font-medium mb-8">The more details you provide, the better quotes you'll get.</Text>
+
+            <View className="mb-6">
+              <Text className="text-sm font-bold text-slate-700 mb-2 ml-1">Title</Text>
+              <TextInput 
+                className="bg-white border border-slate-200 rounded-2xl p-4 text-slate-800 text-base"
+                placeholder="e.g. Plumbing repair needed"
+                placeholderTextColor="#94A3B8"
+                value={title}
+                onChangeText={setTitle}
+              />
+            </View>
 
             <View className="mb-6">
               <Text className="text-sm font-bold text-slate-700 mb-2 ml-1">Requirement Details</Text>
@@ -162,15 +174,15 @@ export default function BroadcastScreen({ navigation }: any) {
         {step < 3 ? (
           <TouchableOpacity 
             className={`py-4 rounded-xl items-center ${
-              (step === 1 && !categoryId) || (step === 2 && description.length < 10) 
+              (step === 1 && !categoryId) || (step === 2 && (!title.trim() || description.length < 10)) 
               ? 'bg-slate-200' 
               : 'bg-[#112D4E]'
             }`}
             onPress={() => setStep(step + 1)}
-            disabled={(step === 1 && !categoryId) || (step === 2 && description.length < 10)}
+            disabled={(step === 1 && !categoryId) || (step === 2 && (!title.trim() || description.length < 10))}
           >
             <Text className={`font-bold text-lg ${
-              (step === 1 && !categoryId) || (step === 2 && description.length < 10) 
+              (step === 1 && !categoryId) || (step === 2 && (!title.trim() || description.length < 10)) 
               ? 'text-slate-400' 
               : 'text-white'
             }`}>

@@ -74,7 +74,7 @@ export default function SettingsScreen({ navigation }: any) {
     navigation.navigate('DeleteAccount');
   };
 
-  const pickImage = () => {
+  const pickImage = async () => {
     const options = {
       mediaType: 'photo' as const,
       quality: 0.8 as any,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Linking, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuthStore } from '../../stores/authStore';
 import FadeInView from '../../components/FadeInView';
@@ -7,8 +7,15 @@ import FadeInView from '../../components/FadeInView';
 export default function ProfileScreen({ navigation }: any) {
   const { user, isAuthenticated, logout } = useAuthStore();
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log Out', style: 'destructive', onPress: () => logout() },
+      ]
+    );
   };
 
   const menuItems = [
